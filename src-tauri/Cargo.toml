@@ -1,0 +1,28 @@
+[package]
+name = "cursor-skin-manager"
+version = "0.1.11"
+description = "A Windows cursor skin manager MVP."
+authors = ["Cursor Skin Manager"]
+edition = "2021"
+
+[lib]
+name = "cursor_skin_manager_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+zip = "2"
+image = { version = "0.25", default-features = false, features = ["png"] }
+base64 = "0.22"
+encoding_rs = "0.8"
+winreg = "0.52"
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
