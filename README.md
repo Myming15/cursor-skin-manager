@@ -27,7 +27,7 @@
 
 | 文件 | 适用场景 |
 | --- | --- |
-| `Cursor Skin Manager_x.x.x_x64-setup.exe` | 推荐。包含离线 WebView2 运行库，适合大多数 Windows 电脑。 |
+| `cursor-skin-manager-x.x.x-x64-setup.exe` | 推荐。包含离线 WebView2 运行库，适合大多数 Windows 电脑。 |
 | `cursor-skin-manager-portable-x.x.x.exe` | 便携版，无需安装，但电脑必须已经安装 Microsoft Edge WebView2 Runtime。 |
 | `SHA256SUMS-x.x.x.txt` | 用于校验下载文件是否完整。 |
 
@@ -40,7 +40,7 @@
 可以在 PowerShell 中计算文件校验值：
 
 ```powershell
-Get-FileHash ".\Cursor Skin Manager_x.x.x_x64-setup.exe" -Algorithm SHA256
+Get-FileHash ".\cursor-skin-manager-x.x.x-x64-setup.exe" -Algorithm SHA256
 ```
 
 将结果与 Release 中的 `SHA256SUMS-x.x.x.txt` 对比即可。
