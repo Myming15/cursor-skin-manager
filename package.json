@@ -1,6 +1,12 @@
 {
   "name": "cursor-skin-manager",
   "version": "0.1.11",
+  "description": "A local Windows cursor skin manager built with Tauri, React, TypeScript, and Rust.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Myming15/cursor-skin-manager.git"
+  },
   "private": true,
   "type": "module",
   "scripts": {

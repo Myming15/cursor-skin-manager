@@ -6,6 +6,8 @@
 
 **当前版本：v0.1.11**
 
+**开源许可：[MIT License](LICENSE)**
+
 [下载最新版本](../../releases/latest) · [提交问题](../../issues)
 
 ![Cursor Skin Manager 主界面](docs/images/cursor-skin-manager-overview.png)
@@ -172,3 +174,9 @@ Get-FileHash ".\cursor-skin-manager-x.x.x-x64-setup.exe" -Algorithm SHA256
 - `app.log` 或 `startup.log` 中相关内容。
 
 发布记录和历史版本可以在 [Releases](../../releases) 查看。
+
+## 开源许可
+
+本项目基于 [MIT License](LICENSE) 开源。你可以使用、复制、修改和分发本项目，也可以用于商业用途，但需要保留原始版权与许可证声明。软件按“原样”提供，不附带任何明示或暗示担保。
+
+Copyright (c) 2026 Myming15
