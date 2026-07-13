@@ -8,7 +8,7 @@
 
 **开源许可：[MIT License](LICENSE)**
 
-[下载最新版本](../../releases/latest) · [提交问题](../../issues)
+[下载最新版本](../../releases/latest) · [提交问题](../../issues) · [参与贡献](CONTRIBUTING.md)
 
 ![Cursor Skin Manager 主界面](docs/images/cursor-skin-manager-overview.png)
 
