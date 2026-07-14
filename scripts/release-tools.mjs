@@ -7,6 +7,7 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   statSync,
   writeFileSync,
 } from "node:fs";
@@ -243,6 +244,56 @@ export async function assembleReleaseAssets({
     names,
     hashes,
   };
+}
+
+export async function verifyReleaseAssets({ inputDir, version }) {
+  const input = resolve(inputDir);
+  const names = buildAssetNames(version);
+  const expectedFiles = [
+    names.setupName,
+    names.portableName,
+    names.checksumName,
+    names.releaseNotesName,
+  ].sort();
+  const actualFiles = readdirSync(input, { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .sort();
+
+  if (JSON.stringify(actualFiles) !== JSON.stringify(expectedFiles)) {
+    throw new Error(
+      `Release artifact file set is invalid. Expected [${expectedFiles.join(", ")}], received [${actualFiles.join(", ")}].`
+    );
+  }
+
+  const checksumPath = join(input, names.checksumName);
+  const checksumLines = readFileSync(checksumPath, "ascii").trim().split(/\r?\n/);
+  const expectedHashes = new Map();
+  for (const line of checksumLines) {
+    const match = /^([0-9a-f]{64}) {2}(.+)$/.exec(line);
+    if (!match || expectedHashes.has(match[2])) {
+      throw new Error(`Invalid SHA-256 entry: ${line}`);
+    }
+    expectedHashes.set(match[2], match[1]);
+  }
+
+  const executableNames = [names.setupName, names.portableName].sort();
+  if (JSON.stringify([...expectedHashes.keys()].sort()) !== JSON.stringify(executableNames)) {
+    throw new Error("SHA-256 file must contain exactly the setup and portable executables.");
+  }
+
+  const assets = [];
+  for (const name of executableNames) {
+    const filePath = join(input, name);
+    assertUsableAsset(filePath, name);
+    const sha256 = await hashFile(filePath);
+    if (sha256 !== expectedHashes.get(name)) {
+      throw new Error(`SHA-256 mismatch: ${name}`);
+    }
+    assets.push({ name, bytes: statSync(filePath).size, sha256 });
+  }
+
+  return { inputDir: input, files: actualFiles, assets };
 }
 
 export function writeGitHubOutputs(context, outputPath = process.env.GITHUB_OUTPUT) {

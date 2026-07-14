@@ -24,6 +24,7 @@
     "test:release": "node --test scripts/release-tools.test.mjs",
     "release:validate": "node scripts/release.mjs validate --mode dry-run",
     "release:prepare": "node scripts/release.mjs prepare --mode dry-run --output release-output",
+    "release:verify": "node scripts/release.mjs verify --mode dry-run --output release-output",
     "preview": "vite preview",
     "tauri": "tauri"
   },
