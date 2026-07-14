@@ -1,0 +1,108 @@
+name: "Bug 报告 / Bug report"
+description: "报告可稳定复现的应用错误、崩溃或行为异常。"
+title: "[Bug] "
+labels:
+  - "bug"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请完整填写必填项；信息不足会显著增加定位时间。
+        安全漏洞请勿在此提交，请使用仓库 Security 页面的私密报告入口。
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: "提交前检查 / Pre-flight checklist"
+      options:
+        - label: "我已使用最新公开版本复现此问题。 / I reproduced this on the latest public release."
+          required: true
+        - label: "我已搜索现有 Issue，未发现相同问题。 / I searched existing issues for duplicates."
+          required: true
+        - label: "此报告不包含安全漏洞、凭据或未脱敏的个人信息。 / This report contains no security details, credentials, or unredacted personal data."
+          required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: "应用版本 / App version"
+      description: "可在应用设置中查看，例如 0.1.11。"
+      placeholder: "0.1.11"
+    validations:
+      required: true
+
+  - type: input
+    id: windows-environment
+    attributes:
+      label: "Windows 环境 / Windows environment"
+      description: "请包含 Windows 版本、系统版本号和架构。"
+      placeholder: "Windows 11 24H2, build 26100, x64"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: "安装方式 / Installation method"
+      options:
+        - "安装版 / Installer"
+        - "便携版 / Portable"
+        - "源码运行 / Source build"
+        - "其他 / Other"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: affected-area
+    attributes:
+      label: "影响功能 / Affected area"
+      options:
+        - "启动或单实例 / Startup or single instance"
+        - "导入与解析 / Import and parsing"
+        - "光标预览 / Cursor preview"
+        - "应用、刷新或恢复默认 / Apply, refresh, or reset"
+        - "角色替换或重新分配 / Role replacement or assignment"
+        - "删除、清空或数据保存 / Delete, clear, or persistence"
+        - "设置、自启或系统托盘 / Settings, autostart, or tray"
+        - "安装与打包 / Installation or packaging"
+        - "其他 / Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "复现步骤 / Steps to reproduce"
+      description: "请从应用启动或导入前状态开始，按顺序列出最短步骤。"
+      placeholder: |
+        1. 打开应用
+        2. 导入...
+        3. 点击...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "期望结果 / Expected behavior"
+      placeholder: "说明你认为应该发生什么。"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: "实际结果 / Actual behavior"
+      description: "请包含完整错误提示，以及问题是否每次发生。"
+      placeholder: "说明实际发生了什么。"
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: "日志、截图与补充信息 / Logs, screenshots, and context"
+      description: "仅粘贴 app.log 或 startup.log 的相关片段。上传前请遮盖用户名、私人路径和其他敏感信息。"
+      placeholder: "将已脱敏日志、截图或其他必要信息拖放到这里；没有时请填写“无”。"
+    validations:
+      required: true
