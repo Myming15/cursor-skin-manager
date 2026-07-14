@@ -5,6 +5,7 @@ import {
   assembleReleaseAssets,
   loadReleaseContext,
   resolveBuiltAssetPaths,
+  verifyReleaseAssets,
   writeGitHubOutputs,
 } from "./release-tools.mjs";
 
@@ -20,9 +21,9 @@ const { positionals, values } = parseArgs({
 
 async function main() {
   const command = positionals[0];
-  if (!command || !["validate", "prepare"].includes(command)) {
+  if (!command || !["validate", "prepare", "verify"].includes(command)) {
     throw new Error(
-      "Usage: node scripts/release.mjs <validate|prepare> --mode <dry-run|tag> [--ref vX.Y.Z]"
+      "Usage: node scripts/release.mjs <validate|prepare|verify> --mode <dry-run|tag> [--ref vX.Y.Z]"
     );
   }
   if (!values.mode) {
@@ -46,6 +47,12 @@ async function main() {
         2
       )
     );
+    return;
+  }
+
+  if (command === "verify") {
+    const result = await verifyReleaseAssets({ inputDir: values.output, version: context.version });
+    console.log(JSON.stringify(result, null, 2));
     return;
   }
 

@@ -57,9 +57,9 @@ cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -
 
 1. 打开 GitHub Actions 的 `Windows Release`。
 2. 点击 `Run workflow`，选择 `main` 后确认。
-3. 等待 `Release / Verify and package` 完成；手动运行不会执行 `Release / Create draft`。
-4. 下载名称为 `cursor-skin-manager-X.Y.Z-windows-x64` 的 Artifact。
-5. 确认包含两个 EXE、SHA-256 文件和 `release-notes.md`，且没有 Draft 或公开 Release 被创建。
+3. 等待 `Release / Verify and package` 与 `Release / Verify uploaded artifact` 完成；后一个任务会重新下载上传后的 Artifact，并独立核对文件集合和 SHA-256。
+4. 确认手动运行没有执行 `Release / Create draft`，且没有 Draft 或公开 Release 被创建。
+5. 下载名称为 `cursor-skin-manager-X.Y.Z-windows-x64` 的 Artifact，确认包含两个 EXE、SHA-256 文件和 `release-notes.md`。
 
 在解压目录中验证 SHA-256：
 
@@ -103,7 +103,7 @@ git tag -a vX.Y.Z -m "Cursor Skin Manager vX.Y.Z"
 git push origin vX.Y.Z
 ```
 
-标签会触发 `Windows Release`。工作流重新执行全部检查和构建，然后创建 Draft Release。维护者需要下载 Draft 中的文件，重新核对名称、SHA-256、Release Notes 和版本号，最后在 GitHub 页面手动发布并按需设为 Latest。
+标签会触发 `Windows Release`。工作流重新执行全部检查和构建，上传后重新下载并验证 Artifact，全部成功后才创建 Draft Release。维护者需要下载 Draft 中的文件，重新核对名称、SHA-256、Release Notes 和版本号，最后在 GitHub 页面手动发布并按需设为 Latest。
 
 不要在工作流运行期间重复推送标签，也不要移动已有标签。
 

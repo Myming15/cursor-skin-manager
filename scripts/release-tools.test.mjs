@@ -9,6 +9,7 @@ import {
   buildAssetNames,
   extractChangelogSection,
   validateVersionMap,
+  verifyReleaseAssets,
 } from "./release-tools.mjs";
 
 test("validates synchronized dry-run versions", () => {
@@ -73,6 +74,16 @@ test("assembles stable asset names and SHA-256 checksums", async () => {
     assert.match(checksumFile, new RegExp(`${installerHash}  ${names.setupName}`));
     assert.match(checksumFile, new RegExp(`${portableHash}  ${names.portableName}`));
     assert.equal(readFileSync(join(output, names.releaseNotesName), "utf8"), "Release notes\n");
+
+    const verified = await verifyReleaseAssets({ inputDir: output, version: "0.1.12" });
+    assert.equal(verified.assets.length, 2);
+    assert.ok(verified.assets.every((asset) => asset.bytes > 0));
+
+    writeFileSync(join(output, names.portableName), "changed-portable-bytes");
+    await assert.rejects(
+      verifyReleaseAssets({ inputDir: output, version: "0.1.12" }),
+      /SHA-256 mismatch/
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
