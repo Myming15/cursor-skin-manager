@@ -208,6 +208,8 @@ Tauri 会先执行 `npm run build`，再编译 Rust Release 并在 `src-tauri/ta
 npm run tauri -- build --help
 ```
 
+正式版本通过 `Windows Release` 工作流生成，手动触发只执行不会公开 Release 的 Dry Run，`v*` 标签触发后也只创建 Draft Release。版本同步、SHA-256、冒烟测试和回滚步骤见 [`RELEASING.md`](RELEASING.md)。
+
 ## 应用数据与日志
 
 开发版和正式版默认共用当前用户数据目录：

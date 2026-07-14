@@ -1,6 +1,7 @@
 node_modules/
 dist/
 release/
+release-output/
 src-tauri/
 docs/
 public/

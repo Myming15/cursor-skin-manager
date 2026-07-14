@@ -6,6 +6,7 @@ src-tauri/gen/schemas/
 
 # Local release artifacts (publish these through GitHub Releases)
 release/
+release-output/
 
 # Editor and local agent state
 .vs/
