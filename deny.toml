@@ -1,5 +1,11 @@
+[graph]
+# Release binaries are Windows-only; Unix GUI backends in Cargo.lock are not shipped.
+targets = ["x86_64-pc-windows-msvc"]
+all-features = true
+
 [advisories]
 unmaintained = "workspace"
+unsound = "all"
 yanked = "deny"
 ignore = []
 

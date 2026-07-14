@@ -17,6 +17,7 @@
 - 将 Vite 升级到 `6.4.3`、Vitest 升级到 `3.2.7`，修复 npm 审计发现的已知开发工具漏洞。
 - 增加 npm、Cargo 和 GitHub Actions 三类每周 Dependabot 更新，并限制同时打开的更新 PR 数量。
 - 增加 npm 高危漏洞审计、Cargo 公告/许可证/来源审计，以及 JavaScript/TypeScript CodeQL 扫描。
+- 将 Cargo 安全审计限定到实际发布的 Windows x64 依赖图，并阻塞该图内的全部 unsound 公告。
 - 将 GitHub Actions 固定到完整提交 SHA，并保持工作流最小权限。
 - 增加锁定 npm 与 Cargo 依赖的许可证清单和变更门禁。
 
