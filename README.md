@@ -4,11 +4,11 @@
 
 它可以识别本地 `.cur`、`.ani` 和 `install.inf`，预览整套光标，并一键应用到 Windows 当前用户。所有皮肤都保存在本机，不需要账号，也不包含在线市场、收藏或云同步。
 
-**当前版本：v0.1.11**
+**当前稳定版本：[v0.1.11](../../releases/tag/v0.1.11)**
 
 **开源许可：[MIT License](LICENSE)**
 
-[下载最新版本](../../releases/latest) · [获取帮助](SUPPORT.md) · [安全策略](SECURITY.md) · [提交问题](../../issues) · [参与贡献](CONTRIBUTING.md)
+[下载最新版本](../../releases/latest) · [更新日志](CHANGELOG.md) · [路线图](ROADMAP.md) · [获取帮助](SUPPORT.md) · [安全策略](SECURITY.md) · [提交问题](../../issues) · [参与贡献](CONTRIBUTING.md)
 
 ![Cursor Skin Manager 主界面](docs/images/cursor-skin-manager-overview.png)
 
@@ -170,6 +170,8 @@ Get-FileHash ".\cursor-skin-manager-x.x.x-x64-setup.exe" -Algorithm SHA256
 - [开发环境](docs/DEVELOPMENT.md)
 - [系统架构](docs/ARCHITECTURE.md)
 - [数据格式](docs/DATA_FORMAT.md)
+- [更新日志](CHANGELOG.md)
+- [项目路线图](ROADMAP.md)
 
 项目当前仍专注于 Windows 本地光标管理 MVP。较大功能请先创建 Feature Request，与维护者确认范围后再开始实现。
 
@@ -184,7 +186,7 @@ Get-FileHash ".\cursor-skin-manager-x.x.x-x64-setup.exe" -Algorithm SHA256
 - 错误提示或界面截图。
 - `app.log` 或 `startup.log` 中相关内容。
 
-发布记录和历史版本可以在 [Releases](../../releases) 查看。
+面向用户的变化记录见 [更新日志](CHANGELOG.md)，可下载历史版本和资产见 [GitHub Releases](../../releases)。
 
 ## 开源许可
 
