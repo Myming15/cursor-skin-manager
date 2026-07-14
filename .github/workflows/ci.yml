@@ -52,7 +52,10 @@ jobs:
         run: npm run format:check
 
       - name: Run frontend tests
-        run: npm run test:ui
+        run: |
+          npm run test:ui
+          npm run test:release
+          npm run release:validate
 
       - name: Build TypeScript and Vite frontend
         run: npm run build

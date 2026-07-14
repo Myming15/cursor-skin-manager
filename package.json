@@ -21,6 +21,9 @@
     "licenses:cargo:check": "node scripts/generate-third-party-licenses.mjs --check --ecosystem cargo",
     "security:audit": "npm audit --audit-level=high --registry=https://registry.npmjs.org",
     "test:ui": "vitest run",
+    "test:release": "node --test scripts/release-tools.test.mjs",
+    "release:validate": "node scripts/release.mjs validate --mode dry-run",
+    "release:prepare": "node scripts/release.mjs prepare --mode dry-run --output release-output",
     "preview": "vite preview",
     "tauri": "tauri"
   },

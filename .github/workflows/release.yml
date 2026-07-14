@@ -1,0 +1,187 @@
+name: Windows Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CI: true
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Release / Verify and package
+    runs-on: windows-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      tag: ${{ steps.metadata.outputs.tag }}
+      artifact_name: ${{ steps.metadata.outputs.artifact_name }}
+      setup_name: ${{ steps.metadata.outputs.setup_name }}
+      portable_name: ${{ steps.metadata.outputs.portable_name }}
+      checksum_name: ${{ steps.metadata.outputs.checksum_name }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Set up Rust stable
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+          rustup default stable
+          rustc --version
+          cargo --version
+
+      - name: Cache Cargo dependencies and build output
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            src-tauri/target
+          key: ${{ runner.os }}-release-cargo-stable-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-release-cargo-stable-
+            ${{ runner.os }}-cargo-stable-
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Validate release metadata
+        id: metadata
+        shell: pwsh
+        env:
+          RELEASE_MODE: ${{ startsWith(github.ref, 'refs/tags/v') && 'tag' || 'dry-run' }}
+          RELEASE_REF: ${{ github.ref_name }}
+        run: node scripts/release.mjs validate --mode $env:RELEASE_MODE --ref $env:RELEASE_REF
+
+      - name: Check frontend quality
+        run: |
+          npm run lint
+          npm run format:check
+          npm run test:ui
+          npm run test:release
+          npm run build
+
+      - name: Check Rust quality
+        run: |
+          cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+          cargo test --manifest-path src-tauri/Cargo.toml
+          cargo check --manifest-path src-tauri/Cargo.toml
+          cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
+
+      - name: Build Windows NSIS installer and portable executable
+        run: npm run tauri -- build --bundles nsis
+
+      - name: Prepare release assets and checksums
+        shell: pwsh
+        env:
+          RELEASE_MODE: ${{ startsWith(github.ref, 'refs/tags/v') && 'tag' || 'dry-run' }}
+          RELEASE_REF: ${{ github.ref_name }}
+        run: node scripts/release.mjs prepare --mode $env:RELEASE_MODE --ref $env:RELEASE_REF --output release-output
+
+      - name: Upload private release artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: ${{ steps.metadata.outputs.artifact_name }}
+          path: release-output/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+      - name: Write build summary
+        shell: pwsh
+        run: |
+          @"
+          ## Windows release build
+
+          - Mode: ${{ startsWith(github.ref, 'refs/tags/v') && 'tag' || 'dry-run' }}
+          - Version: ${{ steps.metadata.outputs.version }}
+          - Artifact: ${{ steps.metadata.outputs.artifact_name }}
+          - Public release created: false
+          "@ | Add-Content -Path $env:GITHUB_STEP_SUMMARY
+
+  draft_release:
+    name: Release / Create draft
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download verified release artifact
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: ${{ needs.build.outputs.artifact_name }}
+          path: release-output
+
+      - name: Create draft GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.build.outputs.version }}
+          SETUP_NAME: ${{ needs.build.outputs.setup_name }}
+          PORTABLE_NAME: ${{ needs.build.outputs.portable_name }}
+          CHECKSUM_NAME: ${{ needs.build.outputs.checksum_name }}
+        run: |
+          gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --json tagName 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            throw "Release $env:RELEASE_TAG already exists. Existing releases are never replaced."
+          }
+
+          $assets = @(
+            (Join-Path "release-output" $env:SETUP_NAME),
+            (Join-Path "release-output" $env:PORTABLE_NAME),
+            (Join-Path "release-output" $env:CHECKSUM_NAME)
+          )
+          foreach ($asset in $assets) {
+            if (-not (Test-Path -LiteralPath $asset -PathType Leaf)) {
+              throw "Missing verified release asset: $asset"
+            }
+          }
+
+          gh release create $env:RELEASE_TAG @assets `
+            --repo $env:GITHUB_REPOSITORY `
+            --verify-tag `
+            --draft `
+            --title "Cursor Skin Manager $env:RELEASE_TAG" `
+            --notes-file "release-output/release-notes.md"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Failed to create draft release $env:RELEASE_TAG."
+          }
+
+          $release = gh release view $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --json isDraft,url | ConvertFrom-Json
+          if (-not $release.isDraft) {
+            throw "Release $env:RELEASE_TAG was not created as a draft."
+          }
+
+          @"
+          ## Draft release created
+
+          - Tag: $env:RELEASE_TAG
+          - Version: $env:RELEASE_VERSION
+          - Draft: true
+          - URL: $($release.url)
+          "@ | Add-Content -Path $env:GITHUB_STEP_SUMMARY

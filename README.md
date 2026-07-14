@@ -3,6 +3,7 @@
 [![Windows CI](https://github.com/Myming15/cursor-skin-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Myming15/cursor-skin-manager/actions/workflows/ci.yml)
 [![Dependency Security](https://github.com/Myming15/cursor-skin-manager/actions/workflows/security.yml/badge.svg)](https://github.com/Myming15/cursor-skin-manager/actions/workflows/security.yml)
 [![CodeQL](https://github.com/Myming15/cursor-skin-manager/actions/workflows/codeql.yml/badge.svg)](https://github.com/Myming15/cursor-skin-manager/actions/workflows/codeql.yml)
+[![Windows Release](https://github.com/Myming15/cursor-skin-manager/actions/workflows/release.yml/badge.svg)](https://github.com/Myming15/cursor-skin-manager/actions/workflows/release.yml)
 
 一款简单、专注的 Windows 本地鼠标光标皮肤管理工具。
 
@@ -33,9 +34,9 @@
 
 | 文件 | 适用场景 |
 | --- | --- |
-| `cursor-skin-manager-x.x.x-x64-setup.exe` | 推荐。包含离线 WebView2 运行库，适合大多数 Windows 电脑。 |
-| `cursor-skin-manager-portable-x.x.x.exe` | 便携版，无需安装，但电脑必须已经安装 Microsoft Edge WebView2 Runtime。 |
-| `SHA256SUMS-x.x.x.txt` | 用于校验下载文件是否完整。 |
+| `cursor-skin-manager-x.x.x-windows-x64-setup.exe` | 推荐。包含离线 WebView2 运行库，适合大多数 Windows 电脑。 |
+| `cursor-skin-manager-x.x.x-windows-x64-portable.exe` | 便携版，无需安装，但电脑必须已经安装 Microsoft Edge WebView2 Runtime。 |
+| `cursor-skin-manager-x.x.x-windows-x64-sha256.txt` | 用于校验下载文件是否完整。 |
 
 当前安装包因为包含离线 WebView2 运行库，文件体积约为 200 MB，这是正常现象。
 
@@ -175,6 +176,7 @@ Get-FileHash ".\cursor-skin-manager-x.x.x-x64-setup.exe" -Algorithm SHA256
 - [系统架构](docs/ARCHITECTURE.md)
 - [数据格式](docs/DATA_FORMAT.md)
 - [第三方依赖许可证](docs/THIRD_PARTY_LICENSES.md)
+- [发布与回滚](docs/RELEASING.md)
 - [更新日志](CHANGELOG.md)
 - [项目路线图](ROADMAP.md)
 
