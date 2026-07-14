@@ -83,4 +83,25 @@ Cursor Skin Manager 会导入外部光标文件、保存本地数据并修改 Wi
 
 本项目目前没有漏洞赏金计划，也不承诺报酬。善意、守法且遵守以上边界的报告会被认真评估；是否公开致谢由报告者和维护者共同确认。
 
+## 依赖与供应链安全
+
+仓库启用了 Dependabot Alerts 和 Dependabot Security Updates，并通过每周 Dependabot 检查 npm、Cargo 和 GitHub Actions 依赖。更新 PR 不自动合并，必须经过现有 CI、依赖审计和人工确认。
+
+自动安全检查包括：
+
+- `npm audit`：高危和严重 npm 漏洞会阻止依赖安全工作流通过。
+- `cargo-deny`：检查 Rust 已知漏洞、许可证和依赖来源。
+- CodeQL：扫描 JavaScript 和 TypeScript 的扩展安全规则集。
+- 许可证清单：验证锁定的 npm 与 Cargo 依赖声明，出现未审查的许可证时阻止合并。
+- GitHub Actions：第三方 Action 固定到完整提交 SHA，并保持工作流最小权限。
+
+发现高危或严重依赖漏洞后，维护者按以下顺序处理：
+
+1. 判断依赖是运行时或开发依赖、直接或传递依赖，并确认在本项目真实使用路径中是否可触发。
+2. 优先升级到最小的兼容修复版本；不能直接升级时评估移除依赖、关闭受影响路径或采用上游缓解措施。
+3. 执行完整前端、Rust、供应链和生产构建检查。构建结果发生变化时同步递增应用版本；已发布用户受影响时创建新的修复 Release。
+4. 临时例外必须在 PR 或私密安全记录中写明公告编号、影响范围、暂不修复原因、缓解措施和复查日期，不允许静默或无限期忽略。
+
+中低严重性告警也需要分流和记录，但是否阻止发布取决于可触发性、影响范围和上游修复状态。具体本地命令见 [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md#依赖与供应链检查)，第三方依赖声明见 [`docs/THIRD_PARTY_LICENSES.md`](docs/THIRD_PARTY_LICENSES.md)。
+
 普通支持渠道和第三方皮肤包边界请参阅 [SUPPORT.md](SUPPORT.md)。

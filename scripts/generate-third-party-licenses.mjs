@@ -1,0 +1,197 @@
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const argumentsList = process.argv.slice(2);
+const checkOnly = argumentsList.includes("--check");
+const ecosystemIndex = argumentsList.indexOf("--ecosystem");
+const requestedEcosystem = ecosystemIndex >= 0 ? argumentsList[ecosystemIndex + 1] : null;
+const supportedEcosystems = new Set(["npm", "cargo"]);
+
+if (requestedEcosystem && !supportedEcosystems.has(requestedEcosystem)) {
+  throw new Error(`Unsupported ecosystem: ${requestedEcosystem}`);
+}
+
+const npmAllowedLicenses = new Set([
+  "0BSD",
+  "Apache-2.0",
+  "Apache-2.0 OR MIT",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "BlueOak-1.0.0",
+  "CC-BY-4.0",
+  "ISC",
+  "MIT",
+  "MIT OR Apache-2.0",
+  "MIT-0",
+  "Unlicense",
+]);
+
+function readJson(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function normalizeLicense(packageJson) {
+  if (typeof packageJson.license === "string") {
+    return packageJson.license.trim();
+  }
+  if (packageJson.license && typeof packageJson.license.type === "string") {
+    return packageJson.license.type.trim();
+  }
+  if (Array.isArray(packageJson.licenses)) {
+    return packageJson.licenses
+      .map((license) => (typeof license === "string" ? license : license?.type))
+      .filter(Boolean)
+      .join(" OR ");
+  }
+  return "UNKNOWN";
+}
+
+function sortPackages(packages) {
+  return packages.sort(
+    (left, right) =>
+      left.name.localeCompare(right.name, "en") || left.version.localeCompare(right.version, "en")
+  );
+}
+
+function uniquePackages(packages) {
+  const unique = new Map();
+  for (const item of packages) {
+    unique.set(`${item.name}\0${item.version}`, item);
+  }
+  return sortPackages([...unique.values()]);
+}
+
+function npmPackages() {
+  const lock = readJson(path.join(root, "package-lock.json"));
+  const packages = [];
+  const missing = [];
+
+  for (const [relativePath, lockEntry] of Object.entries(lock.packages ?? {})) {
+    if (!relativePath.includes("node_modules/")) continue;
+
+    const packageJsonPath = path.join(root, relativePath, "package.json");
+    if (!fs.existsSync(packageJsonPath)) {
+      if (!lockEntry.optional) missing.push(relativePath);
+      continue;
+    }
+
+    const packageJson = readJson(packageJsonPath);
+    packages.push({
+      name: packageJson.name,
+      version: packageJson.version,
+      license: normalizeLicense(packageJson),
+    });
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Run npm ci before generating the npm license inventory. Missing: ${missing.slice(0, 5).join(", ")}`
+    );
+  }
+
+  const result = uniquePackages(packages);
+  const rejected = result.filter((item) => !npmAllowedLicenses.has(item.license));
+  if (rejected.length > 0) {
+    throw new Error(
+      `Review new npm licenses before updating the inventory:\n${rejected
+        .map((item) => `- ${item.name}@${item.version}: ${item.license}`)
+        .join("\n")}`
+    );
+  }
+  return result;
+}
+
+function cargoPackages() {
+  const output = execFileSync(
+    "cargo",
+    ["metadata", "--manifest-path", "src-tauri/Cargo.toml", "--format-version", "1", "--locked"],
+    {
+      cwd: root,
+      encoding: "utf8",
+      maxBuffer: 64 * 1024 * 1024,
+      stdio: ["ignore", "pipe", "inherit"],
+    }
+  );
+  const metadata = JSON.parse(output);
+  const packages = metadata.packages
+    .filter((packageInfo) => packageInfo.source !== null)
+    .map((packageInfo) => ({
+      name: packageInfo.name,
+      version: packageInfo.version,
+      license: packageInfo.license || "UNKNOWN",
+    }));
+
+  const missing = packages.filter((item) => item.license === "UNKNOWN");
+  if (missing.length > 0) {
+    throw new Error(
+      `Cargo packages without declared licenses:\n${missing
+        .map((item) => `- ${item.name}@${item.version}`)
+        .join("\n")}`
+    );
+  }
+  return uniquePackages(packages);
+}
+
+function escapeCell(value) {
+  return String(value).replaceAll("|", "\\|");
+}
+
+function renderInventory(ecosystem, packages) {
+  const title = ecosystem === "npm" ? "npm Dependencies" : "Cargo Dependencies";
+  const scope =
+    ecosystem === "npm"
+      ? "This inventory contains packages installed from `package-lock.json` on the supported Windows x64 development environment, including development dependencies. Platform-specific packages for other operating systems are not shipped with the Windows application and are omitted."
+      : "This inventory contains resolved third-party crates from `src-tauri/Cargo.lock` across the Cargo dependency graph.";
+
+  const rows = packages.map(
+    (item) =>
+      `| \`${escapeCell(item.name)}\` | \`${escapeCell(item.version)}\` | \`${escapeCell(item.license)}\` |`
+  );
+
+  return [
+    `# ${title}`,
+    "",
+    "This file is generated by `scripts/generate-third-party-licenses.mjs`. Do not edit it manually.",
+    "",
+    scope,
+    "",
+    "License values are declarations from package metadata. This inventory is not legal advice and does not replace the complete license texts distributed by each upstream project.",
+    "",
+    `Resolved packages: **${packages.length}**`,
+    "",
+    "| Package | Version | Declared license |",
+    "| --- | --- | --- |",
+    ...rows,
+    "",
+  ].join("\n");
+}
+
+function writeOrCheck(relativePath, content) {
+  const outputPath = path.join(root, relativePath);
+  if (checkOnly) {
+    if (!fs.existsSync(outputPath)) {
+      throw new Error(`Missing generated inventory: ${relativePath}`);
+    }
+    const current = fs.readFileSync(outputPath, "utf8").replaceAll("\r\n", "\n");
+    if (current !== content) {
+      throw new Error(`License inventory is out of date: ${relativePath}`);
+    }
+    console.log(`Verified ${relativePath}`);
+    return;
+  }
+
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  fs.writeFileSync(outputPath, content, "utf8");
+  console.log(`Generated ${relativePath}`);
+}
+
+if (!requestedEcosystem || requestedEcosystem === "npm") {
+  writeOrCheck("docs/licenses/npm.md", renderInventory("npm", npmPackages()));
+}
+
+if (!requestedEcosystem || requestedEcosystem === "cargo") {
+  writeOrCheck("docs/licenses/cargo.md", renderInventory("cargo", cargoPackages()));
+}

@@ -12,7 +12,15 @@
 - 增加 Windows GitHub Actions，在 Push 和 Pull Request 中自动执行前端与 Rust 检查。
 - 固定 ESLint、React Hooks、Prettier 工具链，并将前端 Lint、格式检查和零警告 Clippy 设为阻塞质量门禁。
 
-以上变化不修改应用行为，也不生成新二进制，因此应用版本保持 `0.1.11`。下一次功能、Bug 修复、依赖或构建变化只要产生新应用二进制，版本必须从 `0.1.12` 开始递增。
+### 安全与依赖
+
+- 将 Vite 升级到 `6.4.3`、Vitest 升级到 `3.2.7`，修复 npm 审计发现的已知开发工具漏洞。
+- 增加 npm、Cargo 和 GitHub Actions 三类每周 Dependabot 更新，并限制同时打开的更新 PR 数量。
+- 增加 npm 高危漏洞审计、Cargo 公告/许可证/来源审计，以及 JavaScript/TypeScript CodeQL 扫描。
+- 将 GitHub Actions 固定到完整提交 SHA，并保持工作流最小权限。
+- 增加锁定 npm 与 Cargo 依赖的许可证清单和变更门禁。
+
+依赖与构建结果已经变化，因此源码版本已递增为未发布的 `0.1.12`。当前最新公开 Release 仍为 `v0.1.11`，本节尚未生成安装包、便携版或公开标签。
 
 ## [0.1.11] - 2026-07-13
 

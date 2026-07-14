@@ -5,8 +5,8 @@ Cursor Skin Manager 当前专注于 Windows 本地光标皮肤管理。路线图
 ## 当前状态
 
 - 当前稳定版本：[`v0.1.11`](https://github.com/Myming15/cursor-skin-manager/releases/tag/v0.1.11)
+- 当前开发版本：`0.1.12`（未发布）
 - 支持平台：Windows 10/11，主要验证目标为 x64
-- 下一个产生应用行为或二进制变化的版本：`0.1.12`
 - 版本记录：[`CHANGELOG.md`](CHANGELOG.md)
 - 开发边界：[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
@@ -24,20 +24,19 @@ Cursor Skin Manager 当前专注于 Windows 本地光标皮肤管理。路线图
 
 ### 社区与质量基础
 
-基础 Windows CI 和严格代码质量门禁已完成。Push 和 Pull Request 会自动执行 ESLint、Prettier、TypeScript、Vitest、Rust 格式、测试、编译和零警告 Clippy 检查，任一失败都会阻止合并。
+基础 Windows CI、严格代码质量门禁和供应链检查已完成。Push 和 Pull Request 会自动执行 ESLint、Prettier、TypeScript、Vitest、Rust 格式、测试、编译、零警告 Clippy、npm/Cargo 依赖审计和许可证验证；CodeQL 定期扫描 JavaScript 与 TypeScript。Dependabot 每周检查 npm、Cargo 和 GitHub Actions，更新 PR 受数量限制且不会自动合并。
 
 后续工作已经在 [`docs/社区开源建设执行步骤.md`](docs/社区开源建设执行步骤.md) 中确认：
 
-- 增加 Dependabot、依赖审计和 CodeQL 等基础安全检查。
 - 保护 `main` 和公开版本标签，阻止未经检查的强制推送与标签移动。
 - 建立可重复的 Windows 安装版、便携版、SHA-256 和 Draft Release 流程。
 - 整理发布、回滚、Issue 分类和维护节奏。
 
 纯文档、模板和仓库设置不提升应用版本。自动化流程一旦生成与当前公开版本不同的应用二进制，就必须使用新的版本号。
 
-### 下一次应用版本
+### 当前开发版本
 
-下一次功能、Bug 修复、依赖更新或构建变化如果需要发布二进制，版本从 `0.1.12` 开始。具体内容在对应 Issue 被接受前不预先承诺；优先级遵循：
+依赖与构建工具更新已经将源码版本递增为 `0.1.12`，但尚未创建公开标签或 Release。后续独立的应用改动继续按照版本策略递增，不复用已经完成改动的版本号。具体功能在对应 Issue 被接受前不预先承诺；优先级遵循：
 
 1. 防止用户原始文件、内部皮肤和 Windows 光标配置损坏。
 2. 修复跨电脑启动、CUR/ANI/INF 兼容性和中文路径问题。

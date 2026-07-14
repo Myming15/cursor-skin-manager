@@ -1,6 +1,6 @@
 [package]
 name = "cursor-skin-manager"
-version = "0.1.11"
+version = "0.1.12"
 description = "A Windows cursor skin manager MVP."
 authors = ["Cursor Skin Manager"]
 license = "MIT"
