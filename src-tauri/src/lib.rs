@@ -2638,15 +2638,6 @@ pub fn run() {
 mod preview_tests {
     use super::*;
 
-    fn clippy_quality_gate_probe(value: usize) -> bool {
-        value % 2 == 0
-    }
-
-    #[test]
-    fn detects_clippy_quality_gate_probe() {
-        assert!(clippy_quality_gate_probe(2));
-    }
-
     #[test]
     fn decodes_indexed_cursor_dibs() {
         for bit_count in [1u16, 4, 8] {
