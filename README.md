@@ -1,5 +1,7 @@
 # Cursor Skin Manager
 
+[![Windows CI](https://github.com/Myming15/cursor-skin-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Myming15/cursor-skin-manager/actions/workflows/ci.yml)
+
 一款简单、专注的 Windows 本地鼠标光标皮肤管理工具。
 
 它可以识别本地 `.cur`、`.ani` 和 `install.inf`，预览整套光标，并一键应用到 Windows 当前用户。所有皮肤都保存在本机，不需要账号，也不包含在线市场、收藏或云同步。
