@@ -173,6 +173,25 @@ cargo install cargo-deny --locked --version 0.20.2
 
 `npm run licenses:generate` 会根据当前锁文件和已安装包更新 `docs/licenses/npm.md` 与 `docs/licenses/cargo.md`。生成前先运行 `npm ci`，提交时同时审查依赖版本和许可证变化，不要手工编辑生成清单。完整说明见 [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md)。
 
+## 仓库保护与紧急处理
+
+`main` 只接受 Pull Request，并要求前端、Rust、npm 依赖、Cargo 依赖和 CodeQL 共 5 个检查通过。Direct Push、Force Push 和分支删除均被阻止；当前单维护者阶段不要求批准数量，但所有审查对话必须解决。
+
+仓库所有者 `Myming15` 只有在 Pull Request 内才能使用紧急绕过，不能借此直接推送到 `main`。只有等待检查会扩大安全事故、发布中断或数据损坏风险时才可使用：
+
+1. 创建最小范围的紧急 PR，在描述中记录事件、绕过原因、已经完成的验证和待补检查。
+2. 只在 GitHub 合并界面显式选择绕过，不通过本地 Direct Push 绕过审查轨迹。
+3. 风险解除后立即补跑缺失检查；发现问题时使用新的修复 PR，不重写 `main` 历史。
+4. 在原 PR 中补充最终结果和后续行动，保留可审计记录。
+
+`v*` Release 标签只允许仓库所有者创建，并由独立 Ruleset 禁止更新、Force Push 和删除。发布错误应递增版本重新发布，不能移动或复用旧标签。只有标签包含泄露凭据、违法内容或其他必须立即下架的高风险内容时，才允许按以下方式临时处理：
+
+1. 先撤销凭据、下架 Release 资产并记录受影响标签和原因。
+2. 在 GitHub `Settings > Rules > Rulesets` 临时禁用 `Immutable release tags`，只处理受影响标签。
+3. 处理完成后立即重新启用 Ruleset，检查规则历史，并使用新的版本号发布修复。
+
+不得为了修正普通打包错误而删除或移动公开标签。
+
 ## 生产构建
 
 ```powershell
