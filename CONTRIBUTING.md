@@ -56,10 +56,12 @@
 
 本项目是 Windows 桌面应用，完整开发和手动验证需要 Windows 10 或 Windows 11。
 
+完整安装步骤、命令和故障排查见 [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)。开始修改核心数据流前，请同时阅读 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) 和 [`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md)。
+
 请准备：
 
 - Git。
-- Node.js 20 LTS 或更高版本，以及 npm。
+- Node.js 24 LTS，以及随 Node.js 安装的 npm。
 - 通过 rustup 安装的 Rust stable MSVC 工具链。
 - Microsoft C++ Build Tools、Windows SDK 和 Microsoft Edge WebView2 Runtime。
 
@@ -87,6 +89,8 @@ npm run tauri -- dev
 | `public/`、`src-tauri/icons/` | 应用图标与静态资源 |
 | `scripts/` | 打包、便携版和发布辅助脚本 |
 | `docs/` | 产品、品牌、版本和维护文档 |
+
+模块调用边界、导入与应用流程见 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)；`library.json`、备份和 15 个角色字段见 [`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md)。
 
 ## 开发流程
 
