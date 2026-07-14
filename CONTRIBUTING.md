@@ -175,6 +175,16 @@ cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -
 
 需要修复前端格式时执行 `npm run format`，再重新运行 `npm run format:check`。这些命令与 Windows CI 完全一致；Lint、格式或 Clippy 警告都会阻止 Pull Request 合并。
 
+每个 Pull Request 都必须通过以下 5 个 GitHub 必需检查后才能合并：
+
+- `Frontend / Test and build`
+- `Rust / Format, test, and check`
+- `Dependencies / npm audit and licenses`
+- `Dependencies / Cargo advisories and licenses`
+- `CodeQL / JavaScript and TypeScript`
+
+`main` 不接受直接推送或 Force Push，所有代码和文档修改都通过 Pull Request。当前单维护者阶段不强制他人审批，但所有审查对话必须先解决。
+
 修改 `package.json`、`package-lock.json`、`Cargo.toml`、`Cargo.lock`、GitHub Actions 或许可证策略时，还必须执行：
 
 ```powershell
