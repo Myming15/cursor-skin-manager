@@ -6,7 +6,7 @@ This inventory contains packages installed from `package-lock.json` on the suppo
 
 License values are declarations from package metadata. This inventory is not legal advice and does not replace the complete license texts distributed by each upstream project.
 
-Resolved packages: **284**
+Resolved packages: **277**
 
 | Package | Version | Declared license |
 | --- | --- | --- |
@@ -66,9 +66,9 @@ Resolved packages: **284**
 | `@tauri-apps/plugin-dialog` | `2.7.1` | `MIT OR Apache-2.0` |
 | `@tauri-apps/plugin-opener` | `2.5.4` | `MIT OR Apache-2.0` |
 | `@testing-library/dom` | `10.4.1` | `MIT` |
-| `@testing-library/jest-dom` | `6.6.3` | `MIT` |
-| `@testing-library/react` | `16.1.0` | `MIT` |
-| `@testing-library/user-event` | `14.5.2` | `MIT` |
+| `@testing-library/jest-dom` | `6.9.1` | `MIT` |
+| `@testing-library/react` | `16.3.2` | `MIT` |
+| `@testing-library/user-event` | `14.6.1` | `MIT` |
 | `@types/aria-query` | `5.0.4` | `MIT` |
 | `@types/babel__core` | `7.20.5` | `MIT` |
 | `@types/babel__generator` | `7.27.0` | `MIT` |
@@ -104,7 +104,6 @@ Resolved packages: **284**
 | `agent-base` | `7.1.4` | `MIT` |
 | `ajv` | `6.15.0` | `MIT` |
 | `ansi-regex` | `5.0.1` | `MIT` |
-| `ansi-styles` | `4.3.0` | `MIT` |
 | `ansi-styles` | `5.2.0` | `MIT` |
 | `aria-query` | `5.3.0` | `Apache-2.0` |
 | `assertion-error` | `2.0.1` | `MIT` |
@@ -117,10 +116,7 @@ Resolved packages: **284**
 | `call-bind-apply-helpers` | `1.0.2` | `MIT` |
 | `caniuse-lite` | `1.0.30001803` | `CC-BY-4.0` |
 | `chai` | `5.3.3` | `MIT` |
-| `chalk` | `3.0.0` | `MIT` |
 | `check-error` | `2.1.3` | `MIT` |
-| `color-convert` | `2.0.1` | `MIT` |
-| `color-name` | `1.1.4` | `MIT` |
 | `combined-stream` | `1.0.8` | `MIT` |
 | `convert-source-map` | `2.0.0` | `MIT` |
 | `cross-spawn` | `7.0.6` | `MIT` |
@@ -176,7 +172,6 @@ Resolved packages: **284**
 | `glob-parent` | `6.0.2` | `ISC` |
 | `globals` | `17.7.0` | `MIT` |
 | `gopd` | `1.2.0` | `MIT` |
-| `has-flag` | `4.0.0` | `MIT` |
 | `has-symbols` | `1.1.0` | `MIT` |
 | `has-tostringtag` | `1.0.2` | `MIT` |
 | `hasown` | `2.0.4` | `MIT` |
@@ -205,7 +200,6 @@ Resolved packages: **284**
 | `keyv` | `4.5.4` | `MIT` |
 | `levn` | `0.4.1` | `MIT` |
 | `locate-path` | `6.0.0` | `MIT` |
-| `lodash` | `4.18.1` | `MIT` |
 | `loupe` | `3.2.1` | `MIT` |
 | `lru-cache` | `10.4.3` | `ISC` |
 | `lru-cache` | `5.1.1` | `ISC` |
@@ -258,7 +252,6 @@ Resolved packages: **284**
 | `std-env` | `3.10.0` | `MIT` |
 | `strip-indent` | `3.0.0` | `MIT` |
 | `strip-literal` | `3.1.0` | `MIT` |
-| `supports-color` | `7.2.0` | `MIT` |
 | `symbol-tree` | `3.2.4` | `MIT` |
 | `tinybench` | `2.9.0` | `MIT` |
 | `tinyexec` | `0.3.2` | `MIT` |
