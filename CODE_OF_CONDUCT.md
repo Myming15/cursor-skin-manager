@@ -31,7 +31,7 @@ Cursor Skin Manager 希望为所有参与者提供尊重、专业且可协作的
 - 对仓库内可公开核实的违规，可创建一个标题以 `[行为准则]` 开头的 [GitHub Issue](../../issues)，只提供相关公开链接、简要事实和希望维护者采取的措施。
 - 对威胁、骚扰、仇恨内容、冒充、隐私泄露等敏感或平台级问题，请使用 [GitHub Report Abuse](https://support.github.com/contact/report-abuse) 直接向 GitHub 举报。
 - 如果报告涉及当前维护者，或你不适合通过公开 Issue 报告，请跳过仓库渠道并使用 GitHub Report Abuse。
-- 安全漏洞不属于行为准则报告，请按照 [SUPPORT.md](SUPPORT.md) 中的安全渠道处理，不要创建公开 Issue。
+- 安全漏洞不属于行为准则报告，请按照 [SECURITY.md](SECURITY.md) 私密提交，不要创建公开 Issue。
 
 项目目前不公布个人邮箱，也没有私密的行为准则收件箱。请勿将敏感经历、住址、电话、私人账号或未公开证据写入公共 Issue。维护者不承诺固定响应时间，但会在能够处理时审查仓库内报告。
 

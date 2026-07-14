@@ -50,7 +50,7 @@
 
 ### 安全漏洞
 
-不要为安全漏洞创建公开 Issue。当前项目仅使用 GitHub Private Vulnerability Reporting，不通过公开个人邮箱接收漏洞报告。当仓库的 **Security** 页面显示 **Report a vulnerability** 时，请从该入口私密提交；若入口暂时不可见，请不要公开漏洞细节，等待仓库安全策略完成配置。
+不要为安全漏洞创建公开 Issue。请阅读 [安全策略](SECURITY.md)，并从仓库 **Security** 页面的 **Report a vulnerability** 入口通过 GitHub Private Vulnerability Reporting 私密提交。当前项目不通过公开个人邮箱接收漏洞报告。
 
 ## 开发环境
 
