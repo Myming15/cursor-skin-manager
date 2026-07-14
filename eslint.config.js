@@ -59,7 +59,7 @@ export default defineConfig(
     },
   },
   {
-    files: ["eslint.config.js"],
+    files: ["eslint.config.js", "scripts/**/*.mjs"],
     extends: [js.configs.recommended],
     languageOptions: {
       ecmaVersion: 2022,

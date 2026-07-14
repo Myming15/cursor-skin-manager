@@ -175,6 +175,17 @@ cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -
 
 需要修复前端格式时执行 `npm run format`，再重新运行 `npm run format:check`。这些命令与 Windows CI 完全一致；Lint、格式或 Clippy 警告都会阻止 Pull Request 合并。
 
+修改 `package.json`、`package-lock.json`、`Cargo.toml`、`Cargo.lock`、GitHub Actions 或许可证策略时，还必须执行：
+
+```powershell
+npm run security:audit
+npm run licenses:generate
+npm run licenses:check
+cargo deny --manifest-path src-tauri/Cargo.toml --all-features check advisories licenses sources
+```
+
+依赖 PR 必须提交同步更新的锁文件和 `docs/licenses/` 清单，说明安全或兼容性影响，并通过 Dependency Security 与 CodeQL。不要自动合并 Dependabot PR，也不要为了通过检查而静默忽略公告或放宽许可证策略；本地安装 `cargo-deny` 和审计故障排查见开发文档。
+
 根据修改范围补充手动验证，并在 PR 中写明结果。高风险路径至少包括：
 
 - 导入文件夹、ZIP、单个 `.cur/.ani` 和 `install.inf`。

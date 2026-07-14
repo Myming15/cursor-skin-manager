@@ -1,6 +1,8 @@
 # Cursor Skin Manager
 
 [![Windows CI](https://github.com/Myming15/cursor-skin-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/Myming15/cursor-skin-manager/actions/workflows/ci.yml)
+[![Dependency Security](https://github.com/Myming15/cursor-skin-manager/actions/workflows/security.yml/badge.svg)](https://github.com/Myming15/cursor-skin-manager/actions/workflows/security.yml)
+[![CodeQL](https://github.com/Myming15/cursor-skin-manager/actions/workflows/codeql.yml/badge.svg)](https://github.com/Myming15/cursor-skin-manager/actions/workflows/codeql.yml)
 
 一款简单、专注的 Windows 本地鼠标光标皮肤管理工具。
 
@@ -10,7 +12,7 @@
 
 **开源许可：[MIT License](LICENSE)**
 
-[下载最新版本](../../releases/latest) · [更新日志](CHANGELOG.md) · [路线图](ROADMAP.md) · [获取帮助](SUPPORT.md) · [安全策略](SECURITY.md) · [提交问题](../../issues) · [参与贡献](CONTRIBUTING.md)
+[下载最新版本](../../releases/latest) · [更新日志](CHANGELOG.md) · [路线图](ROADMAP.md) · [获取帮助](SUPPORT.md) · [安全策略](SECURITY.md) · [第三方依赖许可证](docs/THIRD_PARTY_LICENSES.md) · [提交问题](../../issues) · [参与贡献](CONTRIBUTING.md)
 
 ![Cursor Skin Manager 主界面](docs/images/cursor-skin-manager-overview.png)
 
@@ -172,6 +174,7 @@ Get-FileHash ".\cursor-skin-manager-x.x.x-x64-setup.exe" -Algorithm SHA256
 - [开发环境](docs/DEVELOPMENT.md)
 - [系统架构](docs/ARCHITECTURE.md)
 - [数据格式](docs/DATA_FORMAT.md)
+- [第三方依赖许可证](docs/THIRD_PARTY_LICENSES.md)
 - [更新日志](CHANGELOG.md)
 - [项目路线图](ROADMAP.md)
 

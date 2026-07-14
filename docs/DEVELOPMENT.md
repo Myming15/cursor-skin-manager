@@ -150,6 +150,29 @@ Remove-Item Env:\CSM_REAL_ANI -ErrorAction SilentlyContinue
 
 只使用你有权测试的文件，不要把私人或第三方光标包加入仓库。
 
+## 依赖与供应链检查
+
+GitHub 的 Dependency Security 工作流会审计 npm 与 Cargo 依赖，CodeQL 会扫描 JavaScript 和 TypeScript。修改依赖、锁文件、GitHub Actions 或许可证策略时，应在本地额外执行：
+
+```powershell
+npm run security:audit
+npm run licenses:generate
+npm run licenses:check
+cargo deny --manifest-path src-tauri/Cargo.toml --all-features check advisories licenses sources
+```
+
+`security:audit` 显式使用 npm 官方注册表，避免本机镜像没有实现 audit 接口而产生错误结果。高危和严重 npm 漏洞会使命令失败；不要使用 `--force` 自动接受破坏性升级，应选择最小兼容修复并重新运行完整测试。
+
+本地没有 `cargo-deny` 时安装仓库当前使用的版本：
+
+```powershell
+cargo install cargo-deny --locked --version 0.20.2
+```
+
+`cargo-deny` 会检查已知公告、允许的许可证和 crates.io 来源。任何临时忽略都必须按照 [`SECURITY.md`](../SECURITY.md#依赖与供应链安全) 记录公告编号、范围、缓解措施和复查日期。
+
+`npm run licenses:generate` 会根据当前锁文件和已安装包更新 `docs/licenses/npm.md` 与 `docs/licenses/cargo.md`。生成前先运行 `npm ci`，提交时同时审查依赖版本和许可证变化，不要手工编辑生成清单。完整说明见 [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md)。
+
 ## 生产构建
 
 ```powershell

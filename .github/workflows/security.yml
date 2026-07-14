@@ -1,0 +1,87 @@
+name: Dependency Security
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/security.yml
+      - deny.toml
+      - package.json
+      - package-lock.json
+      - scripts/generate-third-party-licenses.mjs
+      - src-tauri/Cargo.toml
+      - src-tauri/Cargo.lock
+      - docs/licenses/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/security.yml
+      - deny.toml
+      - package.json
+      - package-lock.json
+      - scripts/generate-third-party-licenses.mjs
+      - src-tauri/Cargo.toml
+      - src-tauri/Cargo.lock
+      - docs/licenses/**
+  schedule:
+    - cron: "17 1 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  npm:
+    name: Dependencies / npm audit and licenses
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Audit npm dependencies
+        run: npm run security:audit
+
+      - name: Install dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+
+      - name: Check npm license inventory
+        run: npm run licenses:npm:check
+
+  cargo:
+    name: Dependencies / Cargo advisories and licenses
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Check Cargo advisories, licenses, and sources
+        uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
+        with:
+          manifest-path: ./src-tauri/Cargo.toml
+          command: check advisories licenses sources
+          arguments: --all-features
+
+      - name: Set up Node.js for inventory validation
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Check Cargo license inventory
+        run: npm run licenses:cargo:check
