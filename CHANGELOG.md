@@ -4,7 +4,11 @@
 
 ## [未发布]
 
-暂无待发布内容。
+### 依赖与构建
+
+- 将 `tauri-plugin-single-instance` 从 `2.4.2` 更新到 `2.4.3`。
+- 更新 Testing Library 的 Jest DOM、React 和 User Event 开发依赖。
+- 同步 npm、Cargo 锁文件和第三方许可证清单，源码版本递增为 `0.1.13`。
 
 ## [0.1.12] - 2026-07-14
 

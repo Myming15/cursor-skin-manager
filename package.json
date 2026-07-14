@@ -1,6 +1,6 @@
 {
   "name": "cursor-skin-manager",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "A local Windows cursor skin manager built with Tauri, React, TypeScript, and Rust.",
   "license": "MIT",
   "repository": {
@@ -40,9 +40,9 @@
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@tauri-apps/cli": "^2.5.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.1.0",
-    "@testing-library/user-event": "^14.5.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
