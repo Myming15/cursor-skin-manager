@@ -169,7 +169,7 @@ cargo deny --manifest-path src-tauri/Cargo.toml --all-features check advisories 
 cargo install cargo-deny --locked --version 0.20.2
 ```
 
-`cargo-deny` 会检查已知公告、允许的许可证和 crates.io 来源。任何临时忽略都必须按照 [`SECURITY.md`](../SECURITY.md#依赖与供应链安全) 记录公告编号、范围、缓解措施和复查日期。
+`cargo-deny` 会检查实际发布的 `x86_64-pc-windows-msvc` 依赖图中的已知公告、允许的许可证和 crates.io 来源，并将该依赖图内的 unsound 公告全部视为错误。`Cargo.lock` 仍可能包含 Tauri 为其他平台解析的依赖；处置仅存在于未发布目标的告警时，必须先用 `cargo tree --target <目标> -i <crate>` 证明目标范围，并按照 [`SECURITY.md`](../SECURITY.md#依赖与供应链安全) 记录复查条件。
 
 `npm run licenses:generate` 会根据当前锁文件和已安装包更新 `docs/licenses/npm.md` 与 `docs/licenses/cargo.md`。生成前先运行 `npm ci`，提交时同时审查依赖版本和许可证变化，不要手工编辑生成清单。完整说明见 [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md)。
 
