@@ -11,7 +11,7 @@ import {
   UnassignedCursorCard,
   type CursorFile,
   type CursorRole,
-  type SkinPackage
+  type SkinPackage,
 } from "./main";
 
 const ROLE_NAMES = [
@@ -29,7 +29,7 @@ const ROLE_NAMES = [
   ["Diagonal Resize 2", "SizeNESW"],
   ["Move", "SizeAll"],
   ["Alternate Select", "UpArrow"],
-  ["Link Select", "Hand"]
+  ["Link Select", "Hand"],
 ] as const;
 
 describe("cursor role interactions", () => {
@@ -37,7 +37,12 @@ describe("cursor role interactions", () => {
     const user = userEvent.setup();
     const onReplace = vi.fn();
     const { rerender } = render(
-      <CursorRoleCard cursor={role("Normal Select", "Arrow", true)} disabled={false} processing={false} onReplace={onReplace} />
+      <CursorRoleCard
+        cursor={role("Normal Select", "Arrow", true)}
+        disabled={false}
+        processing={false}
+        onReplace={onReplace}
+      />
     );
     const action = screen.getByRole("button", { name: "替换 Normal Select 光标文件" });
 
@@ -52,7 +57,12 @@ describe("cursor role interactions", () => {
     expect(onReplace).toHaveBeenCalledTimes(2);
 
     rerender(
-      <CursorRoleCard cursor={role("Normal Select", "Arrow", true)} disabled processing onReplace={onReplace} />
+      <CursorRoleCard
+        cursor={role("Normal Select", "Arrow", true)}
+        disabled
+        processing
+        onReplace={onReplace}
+      />
     );
     expect(action).toBeDisabled();
     expect(screen.getByText("处理中...")).toBeInTheDocument();
@@ -91,7 +101,9 @@ describe("operation toast", () => {
   it("auto-dismisses cursor edit success messages but keeps errors visible", () => {
     vi.useFakeTimers();
     const onDismiss = vi.fn();
-    const { rerender } = render(<AppToast message="Normal Select 已替换。" onDismiss={onDismiss} />);
+    const { rerender } = render(
+      <AppToast message="Normal Select 已替换。" onDismiss={onDismiss} />
+    );
 
     act(() => vi.advanceTimersByTime(3199));
     expect(onDismiss).not.toHaveBeenCalled();
@@ -151,7 +163,7 @@ describe("role assignment dialog", () => {
       selectedRoleKey: "Arrow",
       onSelectRole: vi.fn(),
       onCancel,
-      onConfirm: vi.fn()
+      onConfirm: vi.fn(),
     };
     const { rerender } = render(<RoleAssignmentDialog {...props} busy={false} />);
 
@@ -187,7 +199,7 @@ function role(name: string, windowsKey: string, exists = false): CursorRole {
     previewPath: null,
     previewDataUrl: null,
     type: exists ? "cur" : null,
-    exists
+    exists,
   };
 }
 
@@ -198,7 +210,7 @@ function unassignedFile(): CursorFile {
     previewPath: null,
     previewDataUrl: null,
     type: "cur",
-    exists: true
+    exists: true,
   };
 }
 
@@ -215,6 +227,6 @@ function skin(): SkinPackage {
     isApplied: false,
     importNote: null,
     roles: ROLE_NAMES.map(([name, key], index) => role(name, key, index === 0)),
-    unassignedFiles: [unassignedFile()]
+    unassignedFiles: [unassignedFile()],
   };
 }

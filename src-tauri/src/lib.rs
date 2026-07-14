@@ -179,7 +179,7 @@ const ROLE_DEFS: &[RoleDef] = &[
 
 #[tauri::command]
 fn load_library(app: AppHandle) -> Result<Vec<SkinPackage>, String> {
-    run_logged(&app, "load_library", |app| read_library(app))
+    run_logged(&app, "load_library", read_library)
 }
 
 #[tauri::command]
@@ -702,15 +702,13 @@ fn parse_inf(
         }
 
         let files_from_line = find_cursors_from_line(&expanded, cursor_files);
-        if section == "scheme.cur" {
+        let uses_ordered_scheme = section == "scheme.cur"
+            || ((section == "scheme.reg"
+                || lower.contains("control panel\\cursors\\schemes")
+                || lower.contains("control panel/cursors/schemes"))
+                && files_from_line.len() >= 2);
+        if uses_ordered_scheme {
             ordered_candidates.extend(files_from_line);
-        } else if section == "scheme.reg"
-            || lower.contains("control panel\\cursors\\schemes")
-            || lower.contains("control panel/cursors/schemes")
-        {
-            if files_from_line.len() >= 2 {
-                ordered_candidates.extend(files_from_line);
-            }
         }
     }
 
@@ -1069,7 +1067,7 @@ fn write_file_with_named_backup(path: &Path, backup: &Path, content: &[u8]) -> i
     if let Err(error) = fs::rename(&temp, path) {
         let _ = fs::remove_file(&temp);
         if backup.exists() && !path.exists() {
-            let _ = fs::copy(&backup, path);
+            let _ = fs::copy(backup, path);
         }
         return Err(error);
     }
@@ -1512,9 +1510,7 @@ fn replace_role_mapping(
     role.cursor_type = Some(new_file.cursor_type.clone());
     role.exists = new_file.exists;
 
-    let Some(old_file) = old_file else {
-        return None;
-    };
+    let old_file = old_file?;
     let referenced_elsewhere = skin.roles.iter().enumerate().any(|(index, role)| {
         index != role_index
             && role
@@ -2088,7 +2084,7 @@ fn dib_to_png(dib: &[u8]) -> io::Result<Option<Vec<u8>>> {
     let pixel_offset = header_size
         .checked_add(palette_size)
         .ok_or_else(invalid_data)?;
-    let stride = ((width * bit_count as usize + 31) / 32) * 4;
+    let stride = (width * bit_count as usize).div_ceil(32) * 4;
     let xor_size = stride.checked_mul(height).ok_or_else(invalid_data)?;
     if pixel_offset + xor_size > dib.len() {
         return Ok(None);
@@ -2179,7 +2175,7 @@ fn indexed_pixel(dib: &[u8], row: usize, x: usize, bit_count: u16) -> io::Result
         8 => *dib.get(row + x).ok_or_else(invalid_data)? as usize,
         4 => {
             let byte = *dib.get(row + x / 2).ok_or_else(invalid_data)?;
-            if x % 2 == 0 {
+            if x.is_multiple_of(2) {
                 (byte >> 4) as usize
             } else {
                 (byte & 0x0f) as usize
@@ -2217,6 +2213,425 @@ fn read_i32(bytes: &[u8], offset: usize) -> io::Result<i32> {
 
 fn invalid_data() -> io::Error {
     io::Error::new(io::ErrorKind::InvalidData, "invalid cursor image data")
+}
+
+fn read_text_lossy(path: &Path) -> io::Result<String> {
+    let bytes = fs::read(path)?;
+    if bytes.starts_with(&[0xff, 0xfe]) {
+        let units: Vec<u16> = bytes[2..]
+            .chunks_exact(2)
+            .map(|chunk| u16::from_le_bytes([chunk[0], chunk[1]]))
+            .collect();
+        return Ok(String::from_utf16_lossy(&units));
+    }
+
+    if bytes.starts_with(&[0xfe, 0xff]) {
+        let units: Vec<u16> = bytes[2..]
+            .chunks_exact(2)
+            .map(|chunk| u16::from_be_bytes([chunk[0], chunk[1]]))
+            .collect();
+        return Ok(String::from_utf16_lossy(&units));
+    }
+
+    if let Ok(content) = String::from_utf8(bytes.clone()) {
+        return Ok(content);
+    }
+
+    let (decoded, _, _) = encoding_rs::GBK.decode(&bytes);
+    Ok(decoded.into_owned())
+}
+
+fn imported_at() -> String {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_secs().to_string())
+        .unwrap_or_else(|_| "0".to_string())
+}
+
+fn new_id() -> String {
+    let millis = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_millis())
+        .unwrap_or_default();
+    let sequence = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
+    format!("skin-{}-{}-{}", millis, std::process::id(), sequence)
+}
+
+fn zip_to_io(error: zip::result::ZipError) -> io::Error {
+    io::Error::new(io::ErrorKind::InvalidData, error)
+}
+
+fn to_string<E: std::fmt::Display>(error: E) -> String {
+    error.to_string()
+}
+
+#[cfg(target_os = "windows")]
+fn apply_to_windows_current_user(skin: &SkinPackage) -> Result<(), String> {
+    use winreg::{enums::HKEY_CURRENT_USER, RegKey};
+
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let cursors = hkcu
+        .open_subkey_with_flags("Control Panel\\Cursors", winreg::enums::KEY_SET_VALUE)
+        .map_err(to_string)?;
+
+    for role in skin.roles.iter().filter(|role| role.exists) {
+        if let Some(file_path) = &role.file_path {
+            cursors
+                .set_value(&role.windows_key, file_path)
+                .map_err(to_string)?;
+        }
+    }
+
+    drop(cursors);
+    let _ = try_refresh_windows_cursors();
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn reset_windows_default_cursors() -> Result<(), String> {
+    use winreg::{enums::HKEY_CURRENT_USER, RegKey};
+
+    let values = windows_aero_cursor_values();
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let cursors = hkcu
+        .open_subkey_with_flags("Control Panel\\Cursors", winreg::enums::KEY_SET_VALUE)
+        .map_err(to_string)?;
+
+    cursors.set_value("", &"Windows Aero").map_err(to_string)?;
+    for (key, value) in values {
+        cursors.set_value(key, &value).map_err(to_string)?;
+    }
+    cursors
+        .set_value("Scheme Source", &2u32)
+        .map_err(to_string)?;
+
+    drop(cursors);
+    let _ = try_refresh_windows_cursors();
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn windows_aero_cursor_values() -> Vec<(&'static str, String)> {
+    let keys = [
+        "Arrow",
+        "Help",
+        "AppStarting",
+        "Wait",
+        "Crosshair",
+        "IBeam",
+        "NWPen",
+        "No",
+        "SizeNS",
+        "SizeWE",
+        "SizeNWSE",
+        "SizeNESW",
+        "SizeAll",
+        "UpArrow",
+        "Hand",
+    ];
+
+    if let Some(values) = read_windows_aero_scheme_from_registry() {
+        return keys
+            .iter()
+            .enumerate()
+            .map(|(index, key)| (*key, values.get(index).cloned().unwrap_or_default()))
+            .collect();
+    }
+
+    let cursor_dir = std::env::var("SystemRoot")
+        .map(|root| PathBuf::from(root).join("Cursors"))
+        .unwrap_or_else(|_| PathBuf::from(r"C:\Windows\Cursors"));
+
+    [
+        ("Arrow", "aero_arrow.cur"),
+        ("Help", "aero_helpsel.cur"),
+        ("AppStarting", "aero_working.ani"),
+        ("Wait", "aero_busy.ani"),
+        ("Crosshair", ""),
+        ("IBeam", ""),
+        ("NWPen", "aero_pen.cur"),
+        ("No", "aero_unavail.cur"),
+        ("SizeNS", "aero_ns.cur"),
+        ("SizeWE", "aero_ew.cur"),
+        ("SizeNWSE", "aero_nwse.cur"),
+        ("SizeNESW", "aero_nesw.cur"),
+        ("SizeAll", "aero_move.cur"),
+        ("UpArrow", "aero_up.cur"),
+        ("Hand", "aero_link.cur"),
+    ]
+    .into_iter()
+    .map(|(key, file_name)| {
+        let value = if file_name.is_empty() {
+            String::new()
+        } else {
+            cursor_dir.join(file_name).to_string_lossy().to_string()
+        };
+        (key, value)
+    })
+    .collect()
+}
+
+#[cfg(target_os = "windows")]
+fn read_windows_aero_scheme_from_registry() -> Option<Vec<String>> {
+    use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
+
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    let schemes = hklm
+        .open_subkey_with_flags(
+            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cursors\\Schemes",
+            winreg::enums::KEY_READ,
+        )
+        .ok()?;
+    let scheme: String = schemes.get_value("Windows Aero").ok()?;
+    Some(
+        scheme
+            .split(',')
+            .map(|value| value.trim().to_string())
+            .collect(),
+    )
+}
+
+#[cfg(target_os = "windows")]
+fn refresh_windows_cursors() -> Result<(), String> {
+    if try_refresh_windows_cursors() {
+        Ok(())
+    } else {
+        Err("Windows did not confirm the cursor refresh. The registry values may already be written; reopen Mouse Settings, sign out, or sign in again if the cursor does not update.".into())
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn try_refresh_windows_cursors() -> bool {
+    use std::ffi::OsStr;
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Foundation::LPARAM;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        SendMessageTimeoutW, SystemParametersInfoW, HWND_BROADCAST, SMTO_ABORTIFHUNG,
+        SPIF_SENDCHANGE, SPIF_UPDATEINIFILE, SPI_SETCURSORS, WM_SETTINGCHANGE,
+    };
+
+    let flags = SPIF_UPDATEINIFILE | SPIF_SENDCHANGE;
+    let setting = OsStr::new("Control Panel\\Cursors")
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect::<Vec<u16>>();
+
+    for _ in 0..3 {
+        let reload_ok =
+            unsafe { SystemParametersInfoW(SPI_SETCURSORS, 0, std::ptr::null_mut(), flags) != 0 };
+        let mut broadcast_result = 0usize;
+        let broadcast_ok = unsafe {
+            SendMessageTimeoutW(
+                HWND_BROADCAST,
+                WM_SETTINGCHANGE,
+                0,
+                setting.as_ptr() as LPARAM,
+                SMTO_ABORTIFHUNG,
+                2000,
+                &mut broadcast_result,
+            ) != 0
+        };
+
+        if reload_ok || broadcast_ok {
+            return true;
+        }
+
+        std::thread::sleep(std::time::Duration::from_millis(180));
+    }
+
+    false
+}
+
+#[cfg(not(target_os = "windows"))]
+fn apply_to_windows_current_user(_skin: &SkinPackage) -> Result<(), String> {
+    Err("应用光标只支持 Windows。".into())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn reset_windows_default_cursors() -> Result<(), String> {
+    Err("恢复默认光标只支持 Windows。".into())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn refresh_windows_cursors() -> Result<(), String> {
+    Err("刷新光标只支持 Windows。".into())
+}
+
+fn startup_log_path() -> PathBuf {
+    std::env::var_os("APPDATA")
+        .map(PathBuf::from)
+        .unwrap_or_else(std::env::temp_dir)
+        .join("CursorSkinManager")
+        .join("startup.log")
+}
+
+fn append_startup_log(message: &str) {
+    let path = startup_log_path();
+    if let Some(parent) = path.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) {
+        let _ = writeln!(file, "[{}] {}", imported_at(), message);
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn show_native_startup_error(message: &str) {
+    use std::ffi::OsStr;
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR, MB_OK};
+
+    let title = OsStr::new("Cursor Skin Manager - 启动失败")
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect::<Vec<u16>>();
+    let body = OsStr::new(message)
+        .encode_wide()
+        .chain(std::iter::once(0))
+        .collect::<Vec<u16>>();
+    unsafe {
+        MessageBoxW(
+            std::ptr::null_mut(),
+            body.as_ptr(),
+            title.as_ptr(),
+            MB_OK | MB_ICONERROR,
+        );
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn show_native_startup_error(message: &str) {
+    eprintln!("Cursor Skin Manager startup failed: {message}");
+}
+
+pub fn report_startup_error(message: &str) {
+    append_startup_log(message);
+    show_native_startup_error(&format!(
+        "应用无法启动。\n\n{message}\n\n诊断日志：{}",
+        startup_log_path().to_string_lossy()
+    ));
+}
+
+pub fn install_startup_diagnostics() {
+    append_startup_log("application process started");
+    std::panic::set_hook(Box::new(|info| {
+        let message = format!("panic during startup or runtime: {info}");
+        append_startup_log(&message);
+        show_native_startup_error(&format!(
+            "应用发生异常并需要关闭。\n\n{message}\n\n诊断日志：{}",
+            startup_log_path().to_string_lossy()
+        ));
+    }));
+}
+
+fn show_main_window(app: &AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
+fn build_tray(app: &mut tauri::App) -> tauri::Result<()> {
+    let show_item = MenuItem::with_id(app, "show", "显示主窗口", true, None::<&str>)?;
+    let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
+
+    let mut tray_builder = TrayIconBuilder::new();
+    if let Some(icon) = app.default_window_icon() {
+        tray_builder = tray_builder.icon(icon.clone());
+    }
+
+    tray_builder
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id.as_ref() {
+            "show" => show_main_window(app),
+            "quit" => app.exit(0),
+            _ => {}
+        })
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                show_main_window(tray.app_handle());
+            }
+        })
+        .build(app)?;
+
+    Ok(())
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    let result = tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            show_main_window(app);
+        }))
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
+        .setup(|app| {
+            let settings = read_app_settings(app.handle()).unwrap_or_default();
+            let tray_available = match build_tray(app) {
+                Ok(()) => true,
+                Err(error) => {
+                    let message = format!("system tray initialization failed: {error}");
+                    append_startup_log(&message);
+                    append_log(app.handle(), &message);
+                    false
+                }
+            };
+            app.manage(SettingsState {
+                close_to_tray: AtomicBool::new(settings.close_to_tray && tray_available),
+                tray_available: AtomicBool::new(tray_available),
+            });
+            append_startup_log("tauri setup completed");
+            Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                let close_to_tray = window
+                    .app_handle()
+                    .state::<SettingsState>()
+                    .close_to_tray
+                    .load(Ordering::Relaxed);
+                if close_to_tray {
+                    api.prevent_close();
+                    let _ = window.hide();
+                } else {
+                    window.app_handle().exit(0);
+                }
+            }
+        })
+        .invoke_handler(tauri::generate_handler![
+            load_library,
+            import_skin,
+            replace_cursor_role,
+            assign_unassigned_cursor,
+            delete_skin,
+            apply_skin,
+            reset_system_cursors,
+            load_app_settings,
+            set_close_to_tray,
+            clear_all_skins,
+            open_skin_dir,
+            open_log_file,
+            refresh_system_cursors
+        ])
+        .run(tauri::generate_context!());
+
+    if let Err(error) = result {
+        report_startup_error(&format!("Tauri runtime error: {error}"));
+    }
 }
 
 #[cfg(test)]
@@ -2677,7 +3092,7 @@ mod preview_tests {
         let width = 2usize;
         let height = 2usize;
         let palette_len = 1usize << bit_count;
-        let stride = ((width * bit_count as usize + 31) / 32) * 4;
+        let stride = (width * bit_count as usize).div_ceil(32) * 4;
         let mask_stride = width.div_ceil(32) * 4;
         let pixel_offset = 40 + palette_len * 4;
         let mut dib = vec![0u8; pixel_offset + stride * height + mask_stride * height];
@@ -2702,424 +3117,5 @@ mod preview_tests {
         }
 
         dib
-    }
-}
-
-fn read_text_lossy(path: &Path) -> io::Result<String> {
-    let bytes = fs::read(path)?;
-    if bytes.starts_with(&[0xff, 0xfe]) {
-        let units: Vec<u16> = bytes[2..]
-            .chunks_exact(2)
-            .map(|chunk| u16::from_le_bytes([chunk[0], chunk[1]]))
-            .collect();
-        return Ok(String::from_utf16_lossy(&units));
-    }
-
-    if bytes.starts_with(&[0xfe, 0xff]) {
-        let units: Vec<u16> = bytes[2..]
-            .chunks_exact(2)
-            .map(|chunk| u16::from_be_bytes([chunk[0], chunk[1]]))
-            .collect();
-        return Ok(String::from_utf16_lossy(&units));
-    }
-
-    if let Ok(content) = String::from_utf8(bytes.clone()) {
-        return Ok(content);
-    }
-
-    let (decoded, _, _) = encoding_rs::GBK.decode(&bytes);
-    Ok(decoded.into_owned())
-}
-
-fn imported_at() -> String {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_secs().to_string())
-        .unwrap_or_else(|_| "0".to_string())
-}
-
-fn new_id() -> String {
-    let millis = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| duration.as_millis())
-        .unwrap_or_default();
-    let sequence = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
-    format!("skin-{}-{}-{}", millis, std::process::id(), sequence)
-}
-
-fn zip_to_io(error: zip::result::ZipError) -> io::Error {
-    io::Error::new(io::ErrorKind::InvalidData, error)
-}
-
-fn to_string<E: std::fmt::Display>(error: E) -> String {
-    error.to_string()
-}
-
-#[cfg(target_os = "windows")]
-fn apply_to_windows_current_user(skin: &SkinPackage) -> Result<(), String> {
-    use winreg::{enums::HKEY_CURRENT_USER, RegKey};
-
-    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let cursors = hkcu
-        .open_subkey_with_flags("Control Panel\\Cursors", winreg::enums::KEY_SET_VALUE)
-        .map_err(to_string)?;
-
-    for role in skin.roles.iter().filter(|role| role.exists) {
-        if let Some(file_path) = &role.file_path {
-            cursors
-                .set_value(&role.windows_key, file_path)
-                .map_err(to_string)?;
-        }
-    }
-
-    drop(cursors);
-    let _ = try_refresh_windows_cursors();
-
-    Ok(())
-}
-
-#[cfg(target_os = "windows")]
-fn reset_windows_default_cursors() -> Result<(), String> {
-    use winreg::{enums::HKEY_CURRENT_USER, RegKey};
-
-    let values = windows_aero_cursor_values();
-    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let cursors = hkcu
-        .open_subkey_with_flags("Control Panel\\Cursors", winreg::enums::KEY_SET_VALUE)
-        .map_err(to_string)?;
-
-    cursors.set_value("", &"Windows Aero").map_err(to_string)?;
-    for (key, value) in values {
-        cursors.set_value(key, &value).map_err(to_string)?;
-    }
-    cursors
-        .set_value("Scheme Source", &2u32)
-        .map_err(to_string)?;
-
-    drop(cursors);
-    let _ = try_refresh_windows_cursors();
-
-    Ok(())
-}
-
-#[cfg(target_os = "windows")]
-fn windows_aero_cursor_values() -> Vec<(&'static str, String)> {
-    let keys = [
-        "Arrow",
-        "Help",
-        "AppStarting",
-        "Wait",
-        "Crosshair",
-        "IBeam",
-        "NWPen",
-        "No",
-        "SizeNS",
-        "SizeWE",
-        "SizeNWSE",
-        "SizeNESW",
-        "SizeAll",
-        "UpArrow",
-        "Hand",
-    ];
-
-    if let Some(values) = read_windows_aero_scheme_from_registry() {
-        return keys
-            .iter()
-            .enumerate()
-            .map(|(index, key)| (*key, values.get(index).cloned().unwrap_or_default()))
-            .collect();
-    }
-
-    let cursor_dir = std::env::var("SystemRoot")
-        .map(|root| PathBuf::from(root).join("Cursors"))
-        .unwrap_or_else(|_| PathBuf::from(r"C:\Windows\Cursors"));
-
-    [
-        ("Arrow", "aero_arrow.cur"),
-        ("Help", "aero_helpsel.cur"),
-        ("AppStarting", "aero_working.ani"),
-        ("Wait", "aero_busy.ani"),
-        ("Crosshair", ""),
-        ("IBeam", ""),
-        ("NWPen", "aero_pen.cur"),
-        ("No", "aero_unavail.cur"),
-        ("SizeNS", "aero_ns.cur"),
-        ("SizeWE", "aero_ew.cur"),
-        ("SizeNWSE", "aero_nwse.cur"),
-        ("SizeNESW", "aero_nesw.cur"),
-        ("SizeAll", "aero_move.cur"),
-        ("UpArrow", "aero_up.cur"),
-        ("Hand", "aero_link.cur"),
-    ]
-    .into_iter()
-    .map(|(key, file_name)| {
-        let value = if file_name.is_empty() {
-            String::new()
-        } else {
-            cursor_dir.join(file_name).to_string_lossy().to_string()
-        };
-        (key, value)
-    })
-    .collect()
-}
-
-#[cfg(target_os = "windows")]
-fn read_windows_aero_scheme_from_registry() -> Option<Vec<String>> {
-    use winreg::{enums::HKEY_LOCAL_MACHINE, RegKey};
-
-    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-    let schemes = hklm
-        .open_subkey_with_flags(
-            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Control Panel\\Cursors\\Schemes",
-            winreg::enums::KEY_READ,
-        )
-        .ok()?;
-    let scheme: String = schemes.get_value("Windows Aero").ok()?;
-    Some(
-        scheme
-            .split(',')
-            .map(|value| value.trim().to_string())
-            .collect(),
-    )
-}
-
-#[cfg(target_os = "windows")]
-fn refresh_windows_cursors() -> Result<(), String> {
-    if try_refresh_windows_cursors() {
-        Ok(())
-    } else {
-        Err("Windows did not confirm the cursor refresh. The registry values may already be written; reopen Mouse Settings, sign out, or sign in again if the cursor does not update.".into())
-    }
-}
-
-#[cfg(target_os = "windows")]
-fn try_refresh_windows_cursors() -> bool {
-    use std::ffi::OsStr;
-    use std::os::windows::ffi::OsStrExt;
-    use windows_sys::Win32::Foundation::LPARAM;
-    use windows_sys::Win32::UI::WindowsAndMessaging::{
-        SendMessageTimeoutW, SystemParametersInfoW, HWND_BROADCAST, SMTO_ABORTIFHUNG,
-        SPIF_SENDCHANGE, SPIF_UPDATEINIFILE, SPI_SETCURSORS, WM_SETTINGCHANGE,
-    };
-
-    let flags = SPIF_UPDATEINIFILE | SPIF_SENDCHANGE;
-    let setting = OsStr::new("Control Panel\\Cursors")
-        .encode_wide()
-        .chain(std::iter::once(0))
-        .collect::<Vec<u16>>();
-
-    for _ in 0..3 {
-        let reload_ok =
-            unsafe { SystemParametersInfoW(SPI_SETCURSORS, 0, std::ptr::null_mut(), flags) != 0 };
-        let mut broadcast_result = 0usize;
-        let broadcast_ok = unsafe {
-            SendMessageTimeoutW(
-                HWND_BROADCAST,
-                WM_SETTINGCHANGE,
-                0,
-                setting.as_ptr() as LPARAM,
-                SMTO_ABORTIFHUNG,
-                2000,
-                &mut broadcast_result,
-            ) != 0
-        };
-
-        if reload_ok || broadcast_ok {
-            return true;
-        }
-
-        std::thread::sleep(std::time::Duration::from_millis(180));
-    }
-
-    false
-}
-
-#[cfg(not(target_os = "windows"))]
-fn apply_to_windows_current_user(_skin: &SkinPackage) -> Result<(), String> {
-    Err("应用光标只支持 Windows。".into())
-}
-
-#[cfg(not(target_os = "windows"))]
-fn reset_windows_default_cursors() -> Result<(), String> {
-    Err("恢复默认光标只支持 Windows。".into())
-}
-
-#[cfg(not(target_os = "windows"))]
-fn refresh_windows_cursors() -> Result<(), String> {
-    Err("刷新光标只支持 Windows。".into())
-}
-
-fn startup_log_path() -> PathBuf {
-    std::env::var_os("APPDATA")
-        .map(PathBuf::from)
-        .unwrap_or_else(std::env::temp_dir)
-        .join("CursorSkinManager")
-        .join("startup.log")
-}
-
-fn append_startup_log(message: &str) {
-    let path = startup_log_path();
-    if let Some(parent) = path.parent() {
-        let _ = fs::create_dir_all(parent);
-    }
-    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) {
-        let _ = writeln!(file, "[{}] {}", imported_at(), message);
-    }
-}
-
-#[cfg(target_os = "windows")]
-fn show_native_startup_error(message: &str) {
-    use std::ffi::OsStr;
-    use std::os::windows::ffi::OsStrExt;
-    use windows_sys::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR, MB_OK};
-
-    let title = OsStr::new("Cursor Skin Manager - 启动失败")
-        .encode_wide()
-        .chain(std::iter::once(0))
-        .collect::<Vec<u16>>();
-    let body = OsStr::new(message)
-        .encode_wide()
-        .chain(std::iter::once(0))
-        .collect::<Vec<u16>>();
-    unsafe {
-        MessageBoxW(
-            std::ptr::null_mut(),
-            body.as_ptr(),
-            title.as_ptr(),
-            MB_OK | MB_ICONERROR,
-        );
-    }
-}
-
-#[cfg(not(target_os = "windows"))]
-fn show_native_startup_error(message: &str) {
-    eprintln!("Cursor Skin Manager startup failed: {message}");
-}
-
-pub fn report_startup_error(message: &str) {
-    append_startup_log(message);
-    show_native_startup_error(&format!(
-        "应用无法启动。\n\n{message}\n\n诊断日志：{}",
-        startup_log_path().to_string_lossy()
-    ));
-}
-
-pub fn install_startup_diagnostics() {
-    append_startup_log("application process started");
-    std::panic::set_hook(Box::new(|info| {
-        let message = format!("panic during startup or runtime: {info}");
-        append_startup_log(&message);
-        show_native_startup_error(&format!(
-            "应用发生异常并需要关闭。\n\n{message}\n\n诊断日志：{}",
-            startup_log_path().to_string_lossy()
-        ));
-    }));
-}
-
-fn show_main_window(app: &AppHandle) {
-    if let Some(window) = app.get_webview_window("main") {
-        let _ = window.unminimize();
-        let _ = window.show();
-        let _ = window.set_focus();
-    }
-}
-
-fn build_tray(app: &mut tauri::App) -> tauri::Result<()> {
-    let show_item = MenuItem::with_id(app, "show", "显示主窗口", true, None::<&str>)?;
-    let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
-
-    let mut tray_builder = TrayIconBuilder::new();
-    if let Some(icon) = app.default_window_icon() {
-        tray_builder = tray_builder.icon(icon.clone());
-    }
-
-    tray_builder
-        .menu(&menu)
-        .show_menu_on_left_click(false)
-        .on_menu_event(|app, event| match event.id.as_ref() {
-            "show" => show_main_window(app),
-            "quit" => app.exit(0),
-            _ => {}
-        })
-        .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click {
-                button: MouseButton::Left,
-                button_state: MouseButtonState::Up,
-                ..
-            } = event
-            {
-                show_main_window(tray.app_handle());
-            }
-        })
-        .build(app)?;
-
-    Ok(())
-}
-
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    let result = tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            show_main_window(app);
-        }))
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_autostart::init(
-            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            None,
-        ))
-        .setup(|app| {
-            let settings = read_app_settings(app.handle()).unwrap_or_default();
-            let tray_available = match build_tray(app) {
-                Ok(()) => true,
-                Err(error) => {
-                    let message = format!("system tray initialization failed: {error}");
-                    append_startup_log(&message);
-                    append_log(app.handle(), &message);
-                    false
-                }
-            };
-            app.manage(SettingsState {
-                close_to_tray: AtomicBool::new(settings.close_to_tray && tray_available),
-                tray_available: AtomicBool::new(tray_available),
-            });
-            append_startup_log("tauri setup completed");
-            Ok(())
-        })
-        .on_window_event(|window, event| {
-            if let WindowEvent::CloseRequested { api, .. } = event {
-                let close_to_tray = window
-                    .app_handle()
-                    .state::<SettingsState>()
-                    .close_to_tray
-                    .load(Ordering::Relaxed);
-                if close_to_tray {
-                    api.prevent_close();
-                    let _ = window.hide();
-                } else {
-                    window.app_handle().exit(0);
-                }
-            }
-        })
-        .invoke_handler(tauri::generate_handler![
-            load_library,
-            import_skin,
-            replace_cursor_role,
-            assign_unassigned_cursor,
-            delete_skin,
-            apply_skin,
-            reset_system_cursors,
-            load_app_settings,
-            set_close_to_tray,
-            clear_all_skins,
-            open_skin_dir,
-            open_log_file,
-            refresh_system_cursors
-        ])
-        .run(tauri::generate_context!());
-
-    if let Err(error) = result {
-        report_startup_error(&format!("Tauri runtime error: {error}"));
     }
 }

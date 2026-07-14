@@ -45,6 +45,12 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Check frontend lint
+        run: npm run lint
+
+      - name: Check frontend formatting
+        run: npm run format:check
+
       - name: Run frontend tests
         run: npm run test:ui
 
@@ -88,6 +94,5 @@ jobs:
       - name: Check Rust compilation
         run: cargo check --manifest-path src-tauri/Cargo.toml
 
-      - name: Run Clippy (non-blocking until step 9)
-        continue-on-error: true
-        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features
+      - name: Run Clippy with warnings denied
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings

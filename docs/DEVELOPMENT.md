@@ -121,12 +121,17 @@ npm run preview
 提交 Pull Request 前执行：
 
 ```powershell
+npm run lint
+npm run format:check
 npm run test:ui
 npm run build
 cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
 ```
+
+前端使用固定版本的 ESLint 与 Prettier。`npm run lint` 检查 TypeScript、React Hooks 和 Vite Fast Refresh 规则；`npm run format:check` 只检查格式，`npm run format` 才会写入统一格式。受 Prettier 管理的文本类型通过 `.gitattributes` 固定为 LF，避免 Windows 和其他开发环境产生不同结果。Rust Clippy 使用 `-D warnings`，任何新警告都按错误处理。
 
 当前测试范围：
 

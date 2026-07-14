@@ -163,12 +163,17 @@ npm ci
 每个 Pull Request 至少执行：
 
 ```powershell
+npm run lint
+npm run format:check
 npm run test:ui
 npm run build
 cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
 cargo test --manifest-path src-tauri/Cargo.toml
 cargo check --manifest-path src-tauri/Cargo.toml
+cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
 ```
+
+需要修复前端格式时执行 `npm run format`，再重新运行 `npm run format:check`。这些命令与 Windows CI 完全一致；Lint、格式或 Clippy 警告都会阻止 Pull Request 合并。
 
 根据修改范围补充手动验证，并在 PR 中写明结果。高风险路径至少包括：
 
