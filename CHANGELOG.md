@@ -4,6 +4,10 @@
 
 ## [未发布]
 
+暂无待发布内容。
+
+## [0.1.12] - 2026-07-14
+
 ### 文档与社区
 
 - 采用 MIT License，并建立贡献指南、行为准则、支持指南和安全策略。
@@ -23,7 +27,7 @@
 - 将 GitHub Actions 固定到完整提交 SHA，并保持工作流最小权限。
 - 增加锁定 npm 与 Cargo 依赖的许可证清单和变更门禁。
 
-依赖与构建结果已经变化，因此源码版本已递增为未发布的 `0.1.12`。当前最新公开 Release 仍为 `v0.1.11`，本节尚未公开安装包、便携版或版本标签。
+本版本完善了社区协作、安全检查和 Windows 发布自动化，并重新生成安装版与便携版。
 
 ## [0.1.11] - 2026-07-13
 
@@ -84,5 +88,6 @@
 
 - 重做小尺寸应用图标，并生成 16、20、24、32、40、48、64、128、256px ICO 图层。
 
-[未发布]: https://github.com/Myming15/cursor-skin-manager/compare/v0.1.11...HEAD
+[未发布]: https://github.com/Myming15/cursor-skin-manager/compare/v0.1.12...HEAD
+[0.1.12]: https://github.com/Myming15/cursor-skin-manager/compare/v0.1.11...v0.1.12
 [0.1.11]: https://github.com/Myming15/cursor-skin-manager/releases/tag/v0.1.11
