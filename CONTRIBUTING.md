@@ -61,7 +61,7 @@
 请准备：
 
 - Git。
-- Node.js 24 LTS，以及随 Node.js 安装的 npm。
+- Node.js 24 LTS，以及随 Node.js 安装的 npm；仓库通过 `.nvmrc` 固定 CI 使用的补丁版本。
 - 通过 rustup 安装的 Rust stable MSVC 工具链。
 - Microsoft C++ Build Tools、Windows SDK 和 Microsoft Edge WebView2 Runtime。
 
