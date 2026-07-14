@@ -1,0 +1,102 @@
+name: "光标兼容性 / Cursor compatibility"
+description: "报告特定 CUR、ANI、INF、ZIP 或目录结构的识别兼容问题。"
+title: "[Compatibility] "
+labels:
+  - "bug"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        此表单用于有效光标文件在 Cursor Skin Manager 中无法导入、解析、预览或应用的问题。
+        下载失效、素材缺失、许可争议或在 Windows 中同样损坏的问题应联系皮肤包来源方。
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: "提交前检查 / Pre-flight checklist"
+      options:
+        - label: "我已使用最新公开版本，并搜索过相同兼容性问题。 / I tested the latest release and searched existing issues."
+          required: true
+        - label: "此问题不包含需要私密报告的安全影响。 / This issue has no security impact requiring private reporting."
+          required: true
+        - label: "如果上传样本，我确认有权公开并再分发该最小样本。 / If I attach a sample, I have the right to share and redistribute it."
+          required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: "应用版本 / App version"
+      placeholder: "0.1.11"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: "Windows 与安装环境 / Windows and installation environment"
+      description: "请包含 Windows 版本、架构，以及安装版、便携版或源码运行。"
+      placeholder: "Windows 11 24H2 x64, installer"
+    validations:
+      required: true
+
+  - type: textarea
+    id: package-structure
+    attributes:
+      label: "皮肤包结构 / Skin package structure"
+      description: "列出相关目录和文件名，可隐藏不必要的上级私人路径。"
+      placeholder: |
+        skin/
+          install.inf
+          Arrow.cur
+          Busy.ani
+    validations:
+      required: true
+
+  - type: dropdown
+    id: formats
+    attributes:
+      label: "包含的格式 / Included formats"
+      multiple: true
+      options:
+        - ".cur"
+        - ".ani"
+        - ".inf"
+        - ".zip"
+        - "文件夹 / Folder"
+        - "其他 / Other"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: has-inf
+    attributes:
+      label: "是否包含 install.inf / Contains install.inf"
+      options:
+        - "是 / Yes"
+        - "否 / No"
+        - "不确定 / Unsure"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-and-actual
+    attributes:
+      label: "复现步骤与当前结果 / Reproduction and actual result"
+      description: "说明导入方式、识别数量、完整度、错误提示，以及哪些角色或文件异常。"
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-and-windows
+    attributes:
+      label: "期望结果与 Windows 对比 / Expected result and Windows comparison"
+      description: "说明文件能否被 Windows 鼠标设置或原安装方式正常加载，以及应用应如何识别。"
+    validations:
+      required: true
+
+  - type: textarea
+    id: safe-sample
+    attributes:
+      label: "可安全分享的最小样本 / Safe minimal sample"
+      description: "可拖放自行制作且有权公开的最小文件、已脱敏日志或截图。不能分享文件时，请描述头部格式、编码和目录特征。"
+      placeholder: "添加最小样本或说明无法分享的原因。"

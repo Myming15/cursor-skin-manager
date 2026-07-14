@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: "安全漏洞 / Security vulnerability"
+    url: "https://github.com/Myming15/cursor-skin-manager/security/advisories/new"
+    about: "不要公开安全漏洞，请通过 Private Vulnerability Reporting 私密提交。"
+  - name: "使用帮助 / Usage help"
+    url: "https://github.com/Myming15/cursor-skin-manager#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"
+    about: "先查看 README 常见问题；仍需帮助时可返回并创建标题以 [使用问题] 开头的空白 Issue。"
