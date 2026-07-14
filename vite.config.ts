@@ -6,11 +6,11 @@ export default defineConfig({
   clearScreen: false,
   server: {
     port: 1420,
-    strictPort: true
+    strictPort: true,
   },
   envPrefix: ["VITE_", "TAURI_"],
   build: {
     target: "es2020",
-    minify: "esbuild"
-  }
+    minify: "esbuild",
+  },
 });

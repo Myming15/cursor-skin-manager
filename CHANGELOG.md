@@ -10,6 +10,7 @@
 - 增加 Bug、功能建议、光标兼容性 Issue Form 和 Pull Request 模板。
 - 增加开发环境、系统架构、本地数据格式、更新日志和路线图文档。
 - 增加 Windows GitHub Actions，在 Push 和 Pull Request 中自动执行前端与 Rust 检查。
+- 固定 ESLint、React Hooks、Prettier 工具链，并将前端 Lint、格式检查和零警告 Clippy 设为阻塞质量门禁。
 
 以上变化不修改应用行为，也不生成新二进制，因此应用版本保持 `0.1.11`。下一次功能、Bug 修复、依赖或构建变化只要产生新应用二进制，版本必须从 `0.1.12` 开始递增。
 

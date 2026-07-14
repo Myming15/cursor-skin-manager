@@ -1,0 +1,12 @@
+node_modules/
+dist/
+release/
+src-tauri/
+docs/
+public/
+.agents/
+.vs/
+*.md
+package-lock.json
+cursor-skin-manager-prototype.html
+vite-dev*.log

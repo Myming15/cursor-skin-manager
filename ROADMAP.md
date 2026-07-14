@@ -24,11 +24,10 @@ Cursor Skin Manager 当前专注于 Windows 本地光标皮肤管理。路线图
 
 ### 社区与质量基础
 
-基础 Windows CI 已完成，Push 和 Pull Request 会自动执行 npm、TypeScript、Vitest、Rust 格式、测试、编译和非阻塞 Clippy 检查。
+基础 Windows CI 和严格代码质量门禁已完成。Push 和 Pull Request 会自动执行 ESLint、Prettier、TypeScript、Vitest、Rust 格式、测试、编译和零警告 Clippy 检查，任一失败都会阻止合并。
 
 后续工作已经在 [`docs/社区开源建设执行步骤.md`](docs/社区开源建设执行步骤.md) 中确认：
 
-- 清理现有 Clippy 警告，并建立统一的前端和 Rust 严格质量标准。
 - 增加 Dependabot、依赖审计和 CodeQL 等基础安全检查。
 - 保护 `main` 和公开版本标签，阻止未经检查的强制推送与标签移动。
 - 建立可重复的 Windows 安装版、便携版、SHA-256 和 Draft Release 流程。

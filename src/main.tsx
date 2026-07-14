@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom/client";
 import { getVersion } from "@tauri-apps/api/app";
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
-import { disable as disableAutostart, enable as enableAutostart, isEnabled as isAutostartEnabled } from "@tauri-apps/plugin-autostart";
+import {
+  disable as disableAutostart,
+  enable as enableAutostart,
+  isEnabled as isAutostartEnabled,
+} from "@tauri-apps/plugin-autostart";
 import { open } from "@tauri-apps/plugin-dialog";
 import { ArrowRightLeft, Check, FilePenLine, Settings as SettingsIcon, X } from "lucide-react";
 import "./styles.css";
@@ -42,19 +46,14 @@ export type SkinPackage = {
   unassignedFiles: CursorFile[];
 };
 
-type ActionFeedback =
-  | { kind: "applied"; skinId: string }
-  | { kind: "reset" }
-  | null;
+type ActionFeedback = { kind: "applied"; skinId: string } | { kind: "reset" } | null;
 
 type AppSettings = {
   closeToTray: boolean;
 };
 
 type CursorOperation =
-  | { kind: "replace"; windowsKey: string }
-  | { kind: "assign"; filePath: string }
-  | null;
+  { kind: "replace"; windowsKey: string } | { kind: "assign"; filePath: string } | null;
 
 const CURSOR_EDIT_REAPPLY_MESSAGE = "皮肤已修改，请重新点击‘应用此皮肤’使更改生效。";
 const TOAST_AUTO_DISMISS_MS = 3200;
@@ -74,7 +73,7 @@ const ROLE_PREVIEWS: Record<string, string> = {
   SizeNESW: "↙↗",
   SizeAll: "✥",
   UpArrow: "↑",
-  Hand: "☝"
+  Hand: "☝",
 };
 
 const demoSkins: SkinPackage[] = [
@@ -104,7 +103,7 @@ const demoSkins: SkinPackage[] = [
       ["Diagonal Resize 2", "SizeNESW", "size_nesw.cur", "cur"],
       ["Move", "SizeAll", "move.cur", "cur"],
       ["Alternate Select", "UpArrow", "up.cur", "cur"],
-      ["Link Select", "Hand", "hand.cur", "cur"]
+      ["Link Select", "Hand", "hand.cur", "cur"],
     ].map(([role, windowsKey, fileName, type]) => ({
       role,
       windowsKey,
@@ -113,10 +112,10 @@ const demoSkins: SkinPackage[] = [
       type: type as "cur" | "ani",
       previewPath: null,
       previewDataUrl: null,
-      exists: true
+      exists: true,
     })),
-    unassignedFiles: []
-  }
+    unassignedFiles: [],
+  },
 ];
 
 const isTauri = "__TAURI_INTERNALS__" in window;
@@ -125,7 +124,9 @@ export function App() {
   const [skins, setSkins] = useState<SkinPackage[]>(isTauri ? [] : demoSkins);
   const [selectedId, setSelectedId] = useState<string | null>(isTauri ? null : demoSkins[0].id);
   const [message, setMessage] = useState(
-    isTauri ? "正在读取本地皮肤库..." : "浏览器预览模式：导入、删除、应用需要在 Tauri 桌面窗口中运行。"
+    isTauri
+      ? "正在读取本地皮肤库..."
+      : "浏览器预览模式：导入、删除、应用需要在 Tauri 桌面窗口中运行。"
   );
   const [busy, setBusy] = useState(false);
   const [actionFeedback, setActionFeedback] = useState<ActionFeedback>(null);
@@ -150,7 +151,9 @@ export function App() {
     if (!isTauri) return;
     refreshLibrary();
     loadSettings();
-    getVersion().then(setAppVersion).catch(() => setAppVersion("0.1.11"));
+    getVersion()
+      .then(setAppVersion)
+      .catch(() => setAppVersion("0.1.11"));
   }, []);
 
   useEffect(() => {
@@ -182,7 +185,9 @@ export function App() {
       const library = await invoke<SkinPackage[]>("load_library");
       setSkins(library);
       setSelectedId(nextSelectedId ?? library[0]?.id ?? null);
-      setMessage(library.length > 0 ? "" : "还没有皮肤包，请先导入本地文件夹、.zip、.cur 或 .ani。");
+      setMessage(
+        library.length > 0 ? "" : "还没有皮肤包，请先导入本地文件夹、.zip、.cur 或 .ani。"
+      );
     } catch (error) {
       setMessage(`读取失败：${String(error)}`);
     }
@@ -203,8 +208,8 @@ export function App() {
           ? undefined
           : [
               { name: "Cursor skins", extensions: ["zip", "cur", "ani", "inf"] },
-              { name: "All files", extensions: ["*"] }
-            ]
+              { name: "All files", extensions: ["*"] },
+            ],
     });
 
     if (typeof selected !== "string") return;
@@ -238,7 +243,7 @@ export function App() {
         title: `为 ${cursor.role} 选择光标文件`,
         multiple: false,
         directory: false,
-        filters: [{ name: "Windows 光标文件", extensions: ["cur", "ani"] }]
+        filters: [{ name: "Windows 光标文件", extensions: ["cur", "ani"] }],
       });
       if (typeof selected !== "string") return;
 
@@ -247,15 +252,11 @@ export function App() {
       const library = await invoke<SkinPackage[]>("replace_cursor_role", {
         skinId: skin.id,
         windowsKey: cursor.windowsKey,
-        sourcePath: selected
+        sourcePath: selected,
       });
       setSkins(library);
       setSelectedId(skin.id);
-      setMessage(
-        wasApplied
-          ? CURSOR_EDIT_REAPPLY_MESSAGE
-          : `${cursor.role} 已替换。`
-      );
+      setMessage(wasApplied ? CURSOR_EDIT_REAPPLY_MESSAGE : `${cursor.role} 已替换。`);
     } catch (error) {
       setMessage(`替换失败：${String(error)}`);
     } finally {
@@ -288,7 +289,7 @@ export function App() {
       const library = await invoke<SkinPackage[]>("assign_unassigned_cursor", {
         skinId: selectedSkin.id,
         sourceFilePath: assignmentFile.filePath,
-        windowsKey: assignmentRoleKey
+        windowsKey: assignmentRoleKey,
       });
       setSkins(library);
       setSelectedId(selectedSkin.id);
@@ -389,7 +390,9 @@ export function App() {
       return;
     }
 
-    const confirmed = window.confirm("确定要恢复 Windows 默认鼠标光标吗？这会覆盖当前用户的光标设置。");
+    const confirmed = window.confirm(
+      "确定要恢复 Windows 默认鼠标光标吗？这会覆盖当前用户的光标设置。"
+    );
     if (!confirmed) return;
 
     setBusy(true);
@@ -417,7 +420,7 @@ export function App() {
     try {
       const [storedSettings, autostartEnabled] = await Promise.all([
         invoke<AppSettings>("load_app_settings"),
-        isAutostartEnabled()
+        isAutostartEnabled(),
       ]);
       setCloseToTray(storedSettings.closeToTray);
       setLaunchAtStartup(autostartEnabled);
@@ -457,9 +460,13 @@ export function App() {
   }
 
   async function clearAllSkins() {
-    const confirmed = window.confirm("确定要清空全部本地皮肤吗？此操作会删除应用内保存的所有皮肤包。");
+    const confirmed = window.confirm(
+      "确定要清空全部本地皮肤吗？此操作会删除应用内保存的所有皮肤包。"
+    );
     if (!confirmed) return;
-    const confirmedAgain = window.confirm("此操作无法撤销。若当前有正在使用的皮肤，会先恢复 Windows 默认光标。确认继续？");
+    const confirmedAgain = window.confirm(
+      "此操作无法撤销。若当前有正在使用的皮肤，会先恢复 Windows 默认光标。确认继续？"
+    );
     if (!confirmedAgain) return;
 
     setSettingsBusy(true);
@@ -517,10 +524,20 @@ export function App() {
           <aside className="sidebar">
             <section className="import-box">
               <div className="import-actions">
-                <button className="primary-button" type="button" onClick={() => importSkin("directory")} disabled={busy}>
+                <button
+                  className="primary-button"
+                  type="button"
+                  onClick={() => importSkin("directory")}
+                  disabled={busy}
+                >
                   导入文件夹
                 </button>
-                <button className="secondary-button" type="button" onClick={() => importSkin("file")} disabled={busy}>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => importSkin("file")}
+                  disabled={busy}
+                >
                   导入文件
                 </button>
               </div>
@@ -546,7 +563,11 @@ export function App() {
                     <div className="skin-icon">
                       <CursorPreview
                         cursor={skinListPreview(skin)}
-                        fallback={ROLE_PREVIEWS[skin.roles.find((role) => role.exists)?.windowsKey ?? "Arrow"] ?? "↖"}
+                        fallback={
+                          ROLE_PREVIEWS[
+                            skin.roles.find((role) => role.exists)?.windowsKey ?? "Arrow"
+                          ] ?? "↖"
+                        }
                       />
                     </div>
                     <div className="skin-copy">
@@ -554,7 +575,11 @@ export function App() {
                       <div className="pill-row">
                         {skin.isApplied && <span className="pill ok">正在使用</span>}
                         <span className="pill">{skin.cursorCount} 个光标</span>
-                        {skin.hasInf ? <span className="pill">INF</span> : <span className="pill warn">文件名识别</span>}
+                        {skin.hasInf ? (
+                          <span className="pill">INF</span>
+                        ) : (
+                          <span className="pill warn">文件名识别</span>
+                        )}
                         {hasBrokenFiles(skin) && <span className="pill danger">文件缺失</span>}
                         {!skin.isComplete && <span className="pill warn">不完整</span>}
                       </div>
@@ -587,32 +612,59 @@ export function App() {
                   <div>
                     <h1>{selectedSkin.name}</h1>
                     <p className="subtitle">
-                      来源：{selectedSkin.sourcePath} · {selectedSkin.hasInf ? "已解析安装配置" : "根据文件名识别"}
+                      来源：{selectedSkin.sourcePath} ·{" "}
+                      {selectedSkin.hasInf ? "已解析安装配置" : "根据文件名识别"}
                     </p>
                   </div>
                   <div className="actions">
-                    <button className="secondary-button" type="button" onClick={() => openSkinDir(selectedSkin)} disabled={busy}>
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      onClick={() => openSkinDir(selectedSkin)}
+                      disabled={busy}
+                    >
                       打开皮肤目录
                     </button>
-                    <button className="secondary-button" type="button" onClick={refreshCursors} disabled={busy}>
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      onClick={refreshCursors}
+                      disabled={busy}
+                    >
                       重新加载光标
                     </button>
-                    <button className="danger-button" type="button" onClick={() => deleteSkin(selectedSkin)} disabled={busy}>
+                    <button
+                      className="danger-button"
+                      type="button"
+                      onClick={() => deleteSkin(selectedSkin)}
+                      disabled={busy}
+                    >
                       删除
                     </button>
                     <button
                       className="primary-button"
                       type="button"
                       onClick={() => applySkin(selectedSkin)}
-                      disabled={busy || selectedSkin.cursorCount === 0 || matchedCount(selectedSkin) === 0 || selectedHasBrokenFiles}
+                      disabled={
+                        busy ||
+                        selectedSkin.cursorCount === 0 ||
+                        matchedCount(selectedSkin) === 0 ||
+                        selectedHasBrokenFiles
+                      }
                     >
-                      {actionFeedback?.kind === "applied" && actionFeedback.skinId === selectedSkin.id ? "已应用" : "应用此皮肤"}
+                      {actionFeedback?.kind === "applied" &&
+                      actionFeedback.skinId === selectedSkin.id
+                        ? "已应用"
+                        : "应用此皮肤"}
                     </button>
                   </div>
                 </div>
 
                 <div className="stats-grid">
-                  <StatCard label="识别方式" value={selectedSkin.hasInf ? "install.inf" : "文件名"} />
+                  <StatCard
+                    label="识别方式"
+                    value={selectedSkin.hasInf ? "install.inf" : "文件名"}
+                  />
                   <StatCard label="光标文件" value={`${selectedSkin.cursorCount} 个`} />
                   <StatCard label="完整度" value={`${matchedCount(selectedSkin)} / 15`} />
                   <StatCard label="当前状态" value={selectedSkin.isApplied ? "已应用" : "未应用"} />
@@ -629,7 +681,10 @@ export function App() {
                       key={cursor.windowsKey}
                       cursor={cursor}
                       disabled={busy}
-                      processing={cursorOperation?.kind === "replace" && cursorOperation.windowsKey === cursor.windowsKey}
+                      processing={
+                        cursorOperation?.kind === "replace" &&
+                        cursorOperation.windowsKey === cursor.windowsKey
+                      }
                       onReplace={() => replaceCursorRole(selectedSkin, cursor)}
                     />
                   ))}
@@ -647,24 +702,39 @@ export function App() {
                           key={file.filePath}
                           file={file}
                           disabled={busy || !file.exists}
-                          processing={cursorOperation?.kind === "assign" && cursorOperation.filePath === file.filePath}
+                          processing={
+                            cursorOperation?.kind === "assign" &&
+                            cursorOperation.filePath === file.filePath
+                          }
                           onAssign={() => openAssignmentDialog(file)}
                         />
                       ))}
                     </div>
                   </section>
                 )}
-
               </>
             ) : (
               <div className="detail-empty">
                 <h1>导入一个本地光标皮肤包</h1>
-                <p>选择文件夹、.zip、.cur、.ani 或包含 install.inf 的安装包，应用会复制到内部目录并自动识别光标角色。</p>
+                <p>
+                  选择文件夹、.zip、.cur、.ani 或包含 install.inf
+                  的安装包，应用会复制到内部目录并自动识别光标角色。
+                </p>
                 <div className="empty-actions">
-                  <button className="primary-button" type="button" onClick={() => importSkin("directory")} disabled={busy}>
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={() => importSkin("directory")}
+                    disabled={busy}
+                  >
                     导入文件夹
                   </button>
-                  <button className="secondary-button" type="button" onClick={() => importSkin("file")} disabled={busy}>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => importSkin("file")}
+                    disabled={busy}
+                  >
                     导入文件
                   </button>
                 </div>
@@ -695,7 +765,12 @@ export function App() {
             if (event.target === event.currentTarget) setSettingsOpen(false);
           }}
         >
-          <section className="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+          <section
+            className="settings-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="settings-title"
+          >
             <header className="settings-header">
               <h2 id="settings-title">设置</h2>
               <button type="button" onClick={() => setSettingsOpen(false)} aria-label="关闭设置">
@@ -753,12 +828,17 @@ export function App() {
                   <strong>应用日志</strong>
                   <span>打开运行日志，查看导入、应用和系统刷新记录。</span>
                 </div>
-                <button type="button" onClick={openLogFile}>打开日志</button>
+                <button type="button" onClick={openLogFile}>
+                  打开日志
+                </button>
               </div>
               <div className="danger-setting">
                 <div>
                   <strong>清空全部皮肤</strong>
-                  <p>会删除应用内保存的全部本地皮肤；若当前皮肤正在使用，将先恢复 Windows 默认光标。此操作无法撤销。</p>
+                  <p>
+                    会删除应用内保存的全部本地皮肤；若当前皮肤正在使用，将先恢复 Windows
+                    默认光标。此操作无法撤销。
+                  </p>
                 </div>
                 <button type="button" onClick={clearAllSkins} disabled={settingsBusy || busy}>
                   清空全部皮肤
@@ -789,17 +869,20 @@ export function CursorRoleCard({
   cursor,
   disabled,
   processing,
-  onReplace
+  onReplace,
 }: {
   cursor: CursorRole;
   disabled: boolean;
   processing: boolean;
   onReplace: () => void;
 }) {
-  const bluePreview = cursor.exists && ["Arrow", "Help", "AppStarting", "Wait", "Hand"].includes(cursor.windowsKey);
+  const bluePreview =
+    cursor.exists && ["Arrow", "Help", "AppStarting", "Wait", "Hand"].includes(cursor.windowsKey);
 
   return (
-    <div className={`cursor-card ${cursor.exists ? "" : "missing"} ${disabled ? "disabled" : ""} ${processing ? "processing" : ""}`}>
+    <div
+      className={`cursor-card ${cursor.exists ? "" : "missing"} ${disabled ? "disabled" : ""} ${processing ? "processing" : ""}`}
+    >
       <button
         className="cursor-card-action"
         type="button"
@@ -816,8 +899,12 @@ export function CursorRoleCard({
       <span className="cursor-card-copy">
         <strong>{cursor.role}</strong>
         <span className="cursor-file-meta">
-          <span title={cursor.fileName ?? "未设置"}>{cursor.exists ? cursor.fileName : "未设置"}</span>
-          {cursor.exists && cursor.type && <span className="cursor-type">{cursor.type.toUpperCase()}</span>}
+          <span title={cursor.fileName ?? "未设置"}>
+            {cursor.exists ? cursor.fileName : "未设置"}
+          </span>
+          {cursor.exists && cursor.type && (
+            <span className="cursor-type">{cursor.type.toUpperCase()}</span>
+          )}
         </span>
       </span>
     </div>
@@ -828,7 +915,7 @@ export function UnassignedCursorCard({
   file,
   disabled,
   processing,
-  onAssign
+  onAssign,
 }: {
   file: CursorFile;
   disabled: boolean;
@@ -836,7 +923,9 @@ export function UnassignedCursorCard({
   onAssign: () => void;
 }) {
   return (
-    <div className={`unassigned-item ${file.exists ? "" : "missing"} ${disabled ? "disabled" : ""} ${processing ? "processing" : ""}`}>
+    <div
+      className={`unassigned-item ${file.exists ? "" : "missing"} ${disabled ? "disabled" : ""} ${processing ? "processing" : ""}`}
+    >
       <span className="mini-preview">
         <CursorPreview cursor={file} fallback={file.type.toUpperCase()} />
       </span>
@@ -894,7 +983,7 @@ export function RoleAssignmentDialog({
   busy,
   onSelectRole,
   onCancel,
-  onConfirm
+  onConfirm,
 }: {
   skin: SkinPackage;
   file: CursorFile;
@@ -909,7 +998,8 @@ export function RoleAssignmentDialog({
   latestState.current = { busy, onCancel };
 
   useEffect(() => {
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousFocus =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const focusTimer = window.setTimeout(() => {
       dialogRef.current?.querySelector<HTMLElement>("[data-role-option]")?.focus();
     }, 0);
@@ -975,7 +1065,13 @@ export function RoleAssignmentDialog({
             <h2 id="assignment-title">分配到角色</h2>
             <p>选择一个 Windows 光标角色并确认替换。</p>
           </div>
-          <button className="icon-button" type="button" onClick={onCancel} disabled={busy} aria-label="关闭角色选择">
+          <button
+            className="icon-button"
+            type="button"
+            onClick={onCancel}
+            disabled={busy}
+            aria-label="关闭角色选择"
+          >
             <X size={18} strokeWidth={2} aria-hidden="true" />
           </button>
         </header>
@@ -1009,8 +1105,12 @@ export function RoleAssignmentDialog({
                 </span>
                 <span className="assignment-role-copy">
                   <strong>{role.role}</strong>
-                  <span title={role.fileName ?? "未设置"}>{role.exists ? role.fileName : "未设置"}</span>
-                  <small className={role.exists ? "is-set" : ""}>{role.exists ? "已设置" : "未设置"}</small>
+                  <span title={role.fileName ?? "未设置"}>
+                    {role.exists ? role.fileName : "未设置"}
+                  </span>
+                  <small className={role.exists ? "is-set" : ""}>
+                    {role.exists ? "已设置" : "未设置"}
+                  </small>
                 </span>
                 <span className="assignment-role-check" aria-hidden="true">
                   {selected && <Check size={16} strokeWidth={2.4} />}
@@ -1024,7 +1124,12 @@ export function RoleAssignmentDialog({
           <button className="secondary-button" type="button" onClick={onCancel} disabled={busy}>
             取消
           </button>
-          <button className="primary-button" type="button" onClick={onConfirm} disabled={busy || !selectedRoleKey}>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={onConfirm}
+            disabled={busy || !selectedRoleKey}
+          >
             {busy ? "正在分配..." : "确认替换"}
           </button>
         </footer>
@@ -1038,29 +1143,39 @@ function matchedCount(skin: SkinPackage) {
 }
 
 function hasBrokenFiles(skin: SkinPackage) {
-  return skin.roles.some((role) => role.filePath && !role.exists) || skin.unassignedFiles.some((file) => !file.exists);
+  return (
+    skin.roles.some((role) => role.filePath && !role.exists) ||
+    skin.unassignedFiles.some((file) => !file.exists)
+  );
 }
 
-function skinListPreview(skin: SkinPackage): { previewPath: string | null; previewDataUrl: string | null; exists: boolean } {
+function skinListPreview(skin: SkinPackage): {
+  previewPath: string | null;
+  previewDataUrl: string | null;
+  exists: boolean;
+} {
   return (
     skin.roles.find((role) => role.exists && (role.previewDataUrl || role.previewPath)) ??
-    skin.unassignedFiles.find((file) => file.exists && (file.previewDataUrl || file.previewPath)) ?? {
+    skin.unassignedFiles.find(
+      (file) => file.exists && (file.previewDataUrl || file.previewPath)
+    ) ?? {
       previewPath: null,
       previewDataUrl: null,
-      exists: false
+      exists: false,
     }
   );
 }
 
 export function CursorPreview({
   cursor,
-  fallback
+  fallback,
 }: {
   cursor: { previewPath: string | null; previewDataUrl: string | null; exists: boolean };
   fallback: string;
 }) {
   const [failed, setFailed] = useState(false);
-  const src = cursor.previewDataUrl ?? (cursor.previewPath ? convertFileSrc(cursor.previewPath) : null);
+  const src =
+    cursor.previewDataUrl ?? (cursor.previewPath ? convertFileSrc(cursor.previewPath) : null);
 
   useEffect(() => {
     setFailed(false);
