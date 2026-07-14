@@ -162,6 +162,17 @@ Get-FileHash ".\cursor-skin-manager-x.x.x-x64-setup.exe" -Algorithm SHA256
 
 当前版本不需要登录。皮肤导入、预览、角色匹配和 Windows 光标应用均在本机完成，皮肤文件与配置保存在本地应用数据目录。
 
+## 开发与贡献
+
+欢迎提交 Bug 修复、兼容性改进、测试和文档更新。开始前请阅读：
+
+- [参与贡献](CONTRIBUTING.md)
+- [开发环境](docs/DEVELOPMENT.md)
+- [系统架构](docs/ARCHITECTURE.md)
+- [数据格式](docs/DATA_FORMAT.md)
+
+项目当前仍专注于 Windows 本地光标管理 MVP。较大功能请先创建 Feature Request，与维护者确认范围后再开始实现。
+
 ## 问题反馈
 
 遇到问题请前往 [GitHub Issues](../../issues)。为了更快定位问题，建议提供：
