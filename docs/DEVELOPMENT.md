@@ -16,14 +16,14 @@
 | 工具 | 推荐版本 | 说明 |
 | --- | --- | --- |
 | Git | 当前受支持版本 | 用于克隆、分支和提交 |
-| Node.js | **24 LTS** | 当前官方 LTS；本项目已使用 `v24.14.0` 验证 |
+| Node.js | **24.14.0 LTS** | `.nvmrc` 与 Windows CI 固定使用的版本 |
 | npm | 随 Node.js LTS 安装 | 仓库使用 `package-lock.json`，不要混用其他锁文件 |
 | Rust | stable MSVC | 使用 rustup 管理；本项目已使用 `rustc 1.96.1` 验证 |
 | Tauri CLI | 仓库本地版本 | `package-lock.json` 当前锁定 `tauri-cli 2.11.4`，不要求全局安装 |
 | Visual Studio Build Tools | Visual Studio 2022 Build Tools 17.x 最新维护版 | 安装 **Desktop development with C++** 和 Windows 10/11 SDK |
 | WebView2 | Evergreen Runtime | Tauri Windows WebView 必需；Windows 11 通常已预装 |
 
-Node.js 的支持状态会变化。请优先选择 [Node.js 官方发布页](https://nodejs.org/en/about/previous-releases) 标记为 LTS 的版本；截至 2026-07-14，本项目推荐 v24。Windows 原生依赖安装以 [Tauri 2 Windows prerequisites](https://v2.tauri.app/start/prerequisites/) 为准。
+Node.js 的支持状态会变化。当前开发与 CI 固定为 `.nvmrc` 中的 `24.14.0`；升级前应核对 [Node.js 官方发布页](https://nodejs.org/en/about/previous-releases)，并在独立 PR 中同步本文和 CI。Windows 原生依赖安装以 [Tauri 2 Windows prerequisites](https://v2.tauri.app/start/prerequisites/) 为准。
 
 ### Visual Studio Build Tools
 
@@ -57,6 +57,15 @@ npm ci
 ```
 
 `npm ci` 严格使用 `package-lock.json`，并安装项目本地 Tauri CLI。首次启动 Tauri 时，Cargo 还会下载和编译 Rust 依赖，耗时通常高于后续启动。
+
+使用 nvm-windows 等版本管理器时，可以先按照 `.nvmrc` 切换 Node：
+
+```powershell
+nvm install 24.14.0
+nvm use 24.14.0
+```
+
+不使用版本管理器时，直接安装相同版本的 Node.js 24 LTS 即可。
 
 安装后核对环境：
 
