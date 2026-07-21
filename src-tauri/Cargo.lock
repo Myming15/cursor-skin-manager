@@ -720,7 +720,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
  "winreg 0.52.0",
  "zip",
 ]

@@ -27,4 +27,4 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 base64 = "0.22"
 encoding_rs = "0.8"
 winreg = "0.52"
-windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
